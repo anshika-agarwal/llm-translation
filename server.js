@@ -120,6 +120,15 @@ async function saveSurveyResponse(userId, rating, feedback) {
 }
 
 wss.on('connection', (ws) => {
+    ws.onopen = () => {
+        console.log('WebSocket connection established');
+        document.getElementById('sendButton').disabled = false; // Enable the send button
+        ws.send(JSON.stringify({
+            type: 'join',
+            language: userLanguage
+        }));
+    };
+
     ws.on('message', async (message) => {
         const data = JSON.parse(message);
 

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multilingual Chat</title>
+    <style>
+        /* Your existing styles */
+    </style>
+</head>
+<body>
+    <div id="joinContainer">
+        <h2>Welcome to Multilingual Chat</h2>
+        <p>Select your preferred language:</p>
+        <select id="languageSelect">
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="Chinese">Chinese</option>
+        </select>
+        <button onclick="joinChat()">Join Chat</button>
+    </div>
+
+    <div id="waitingMessage" style="display: none;">
+        Waiting for a chat partner...
+    </div>
+
+    <div id="chatContainer" style="display: none;">
+        <div id="userIdDisplay"></div> <!-- Display user ID here -->
+        <div id="messages"></div>
+        <input type="text" id="messageInput" placeholder="Type your message...">
+        <button id="sendButton" onclick="sendMessage()" disabled>Send</button>
+    </div>
+
+    <script>
+        let ws;
+        let userId;
+        let userLanguage;
+
+        function joinChat() {
+            userLanguage = document.getElementById('languageSelect').value;
+            document.getElementById('joinContainer').style.display = 'none';
+            document.getElementById('waitingMessage').style.display = 'block';
+
+            ws = new WebSocket('ws://54.189.22.142:5000');
+
+            ws.onopen = () => {
+                console.log('WebSocket connection established');
+                document.getElementById('sendButton').disabled = false; // Enable the send button
+                ws.send(JSON.stringify({
+                    type: 'join',
+                    language: userLanguage
+                }));
+            };
+
+            ws.onmessage = handleMessage;
+            ws.onclose = handleDisconnect;
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function handleMessage(event) {
+            const data = JSON.parse(event.data);
+
+            switch (data.type) {
+                case 'userId':
+                    userId = data.userId; // Store the received user ID
+                    document.getElementById('userIdDisplay').textContent = `Your User ID: ${userId}`; // Display the user ID
+                    break;
+
+                case 'matched':
+                    document.getElementById('waitingMessage').style.display = 'none';
+                    document.getElementById('chatContainer').style.display = 'block';
+                    break;
+
+                case 'message':
+                    const messagesDiv = document.getElementById('messages');
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${data.fromUserId === userId ? 'sent' : 'received'}`;
+                    
+                    const originalDiv = document.createElement('div');
+                    originalDiv.className = 'original';
+                    originalDiv.textContent = data.original;
+                    
+                    const translatedDiv = document.createElement('div');
+                    translatedDiv.className = 'translated';
+                    translatedDiv.textContent = data.translated;
+                    
+                    messageDiv.appendChild(originalDiv);
+                    messageDiv.appendChild(translatedDiv);
+                    messagesDiv.appendChild(messageDiv);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    break;
+
+                case 'partnerDisconnected':
+                    document.getElementById('chatContainer').style.display = 'none';
+                    document.getElementById('surveyContainer').style.display = 'block';
+                    break;
+            }
+        }
+
+        function handleDisconnect() {
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('surveyContainer').style.display = 'block';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message && ws) {
+                // Check if the WebSocket is open before sending the message
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'chatMessage',
+                        userId: userId,
+                        message: message,
+                        fromLanguage: userLanguage
+                    }));
+                    input.value = ''; // Clear the input field
+                } else {
+                    console.error('WebSocket is not open. Current state:', ws.readyState);
+                    alert('Unable to send message. Please wait for the connection to be established.');
+                }
+            }
+        }
+
+        // Handle enter key in message input
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
