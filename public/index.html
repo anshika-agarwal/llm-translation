@@ -40,9 +40,8 @@
             userLanguage = document.getElementById('languageSelect').value;
             document.getElementById('joinContainer').style.display = 'none';
             document.getElementById('waitingMessage').style.display = 'block';
-
             ws = new WebSocket('ws://54.189.22.142:5000');
-
+            
             ws.onopen = () => {
                 console.log('WebSocket connection established');
                 document.getElementById('sendButton').disabled = false; // Enable the send button
