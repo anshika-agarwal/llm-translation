@@ -1,7 +1,6 @@
 from quart import Quart
-from chat_controller import chat
-from survey_controller import submit_survey
-from db_init import init_db
+from controllers import chat, submit_survey
+from database import init_db
 
 app = Quart(__name__)
 

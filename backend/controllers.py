@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 from quart import websocket, request, jsonify
-from openai_integration import translate_message_using_openai
+from llm_integration import translate_message_using_openai
 from database import save_conversation, save_survey_response
 
 waiting_room = []
