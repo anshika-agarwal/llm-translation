@@ -217,7 +217,7 @@
                 landing.classList.add('hidden');
                 waiting.classList.remove('hidden');
 
-                ws = new WebSocket('ws://54.189.22.142:5000');
+                ws = new WebSocket('ws://54.189.22.142:5000/ws');  // Change to 'ws://54.189.22.142:5000/ws' if hosted
 
                 ws.onopen = function() {
                     console.log('WebSocket connection established');
@@ -321,7 +321,7 @@
                     comments: formData.get('comments'),
                 };
                 // Send survey data to the server
-                ws.send(JSON.stringify({ type: 'survey', surveyData }));
+                ws.send(JSON.stringify({ type: 'survey', ...surveyData }));
                 alert('Survey submitted. Thank you!');
                 surveyForm.reset();
                 survey.classList.add('hidden');
