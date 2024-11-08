@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Turing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        #container {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #0078d7;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+
+        label, select, button, input[type="text"] {
+            font-size: 1em;
+            margin-top: 10px;
+        }
+
+        select, input[type="text"] {
+            padding: 8px;
+            width: calc(100% - 20px);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: #005fa3;
+        }
+
+        #chat {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        #messages {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            display: inline-block;
+            padding: 10px 15px;
+            border-radius: 20px;
+            margin: 5px 0;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            background-color: #0078d7;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+            text-align: left;
+            width: fit-content;
+        }
+
+        .message.partner {
+            background-color: #e5e5ea;
+            color: black;
+            align-self: flex-start;
+            text-align: left;
+            width: fit-content;
+        }
+
+        #message {
+            width: calc(100% - 20px);
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>LLM Turing Test</h1>
+        
+        <label for="language">Choose your language:</label>
+        <select id="language">
+            <option value="english">English</option>
+            <option value="chinese">Chinese</option>
+            <option value="spanish">Spanish</option>
+        </select>
+        <button onclick="findPair()">Find a Chat Partner</button>
+
+        <div id="chat" style="display: none;">
+            <h3>Chat Room</h3>
+            <div id="messages"></div>
+            <input id="message" type="text" placeholder="Type your message" />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let userLanguage = '';
+
+        function findPair() {
+            userLanguage = document.getElementById("language").value;
+            if (!socket || socket.readyState === WebSocket.CLOSED) {
+                socket = new WebSocket(`ws://${window.location.host}/ws`);
+
+                socket.onopen = () => {
+                    console.log("Connected to WebSocket");
+                    socket.send(JSON.stringify({ type: "language", language: userLanguage }));
+                };
+
+                socket.onmessage = (event) => {
+                    if (event.data === "ping") {
+                        return;  // Ignore ping messages
+                    }
+
+                    if (event.data.includes("Paired!")) {
+                        document.getElementById("chat").style.display = "block";
+                        console.log(event.data);
+                    } else {
+                        // Append received message as partner's message bubble
+                        const messageElement = document.createElement("div");
+                        messageElement.classList.add("message", "partner");
+                        messageElement.textContent = event.data;
+                        document.getElementById("messages").appendChild(messageElement);
+                        document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+                    }
+                };
+
+                socket.onclose = () => {
+                    console.log("Disconnected from WebSocket");
+                    alert("Connection closed. Please refresh or try reconnecting.");
+                };
+
+                socket.onerror = (error) => {
+                    console.error("WebSocket Error:", error);
+                };
+            } else {
+                console.log("WebSocket connection is already open or connecting.");
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById("message").value;
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: "message", text: message }));
+
+                // Append sent message as user's message bubble
+                const messageElement = document.createElement("div");
+                messageElement.classList.add("message", "user");
+                messageElement.textContent = message;
+                document.getElementById("messages").appendChild(messageElement);
+                document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+
+                document.getElementById("message").value = '';
+            } else {
+                console.log("WebSocket is not open. Message not sent.");
+            }
+        }
+    </script>
+</body>
+</html>
