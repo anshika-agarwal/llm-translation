@@ -109,6 +109,11 @@
             border-radius: 4px;
             margin-top: 10px;
         }
+
+        #end-chat, #survey {
+            display: none;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -128,6 +133,30 @@
             <div id="messages"></div>
             <input id="message" type="text" placeholder="Type your message" />
             <button onclick="sendMessage()">Send</button>
+            <button id="end-chat" onclick="endChat()">End Chat</button>
+        </div>
+
+        <div id="survey">
+            <h3>Survey</h3>
+            <label>How would you rate your conversation?</label>
+            <select id="conversationRating">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+
+            <label>How would you rate the translation quality?</label>
+            <select id="translationRating">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+
+            <button onclick="submitSurvey()">Submit Survey</button>
         </div>
     </div>
 
@@ -146,12 +175,11 @@
                 };
 
                 socket.onmessage = (event) => {
-                    if (event.data === "ping") {
-                        return;  // Ignore ping messages
-                    }
+                    if (event.data === "ping") return;  // Ignore ping messages
 
                     if (event.data.includes("Paired!")) {
                         document.getElementById("chat").style.display = "block";
+                        document.getElementById("end-chat").style.display = "inline";
                         console.log(event.data);
                     } else {
                         // Append received message as partner's message bubble
@@ -165,7 +193,8 @@
 
                 socket.onclose = () => {
                     console.log("Disconnected from WebSocket");
-                    alert("Connection closed. Please refresh or try reconnecting.");
+                    document.getElementById("chat").style.display = "none";
+                    document.getElementById("survey").style.display = "block";
                 };
 
                 socket.onerror = (error) => {
@@ -192,6 +221,24 @@
             } else {
                 console.log("WebSocket is not open. Message not sent.");
             }
+        }
+
+        function endChat() {
+            if (socket) {
+                socket.close();
+                document.getElementById("end-chat").style.display = "none";
+            }
+        }
+
+        function submitSurvey() {
+            const conversationRating = document.getElementById("conversationRating").value;
+            const translationRating = document.getElementById("translationRating").value;
+            alert(`Thank you for your feedback!\nConversation Rating: ${conversationRating}\nTranslation Rating: ${translationRating}`);
+            
+            // Clear the form and reset the interface
+            document.getElementById("survey").style.display = "none";
+            document.getElementById("conversationRating").value = "1";
+            document.getElementById("translationRating").value = "1";
         }
     </script>
 </body>
