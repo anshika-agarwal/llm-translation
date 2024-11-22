@@ -76,16 +76,20 @@ async def pair_users():
 
         print(f"[INFO] Paired User {id(user1)} with User {id(user2)}.")
 
-        # Start chat for both users
-        asyncio.create_task(start_chat(user1, user2))
+        # Start the chat timer and the chat session concurrently
+        asyncio.create_task(chat_timer_task(user1, user2))
+        asyncio.create_task(start_chat(user1, user2))        
 
 
 async def start_chat(user1, user2):
     """
     Handle chat between two paired users.
+    Ends when a user sends an endChat message or the timer expires.
     """
     try:
-        while True:
+        chat_ended = False  # Track whether the chat has already ended
+
+        while not chat_ended:
             user1_task = asyncio.create_task(user1.receive())
             user2_task = asyncio.create_task(user2.receive())
 
@@ -97,6 +101,8 @@ async def start_chat(user1, user2):
             if user1_task in done:
                 message = json.loads(user1_task.result())
                 if message["type"] == "endChat":
+                    print("[INFO] User1 ended the chat.")
+                    chat_ended = True  # Mark chat as ended
                     await end_chat_for_both(user1, user2)
                     break
                 translated_message = await translate_message(message["text"], user_languages[user1], user_languages[user2])
@@ -105,13 +111,15 @@ async def start_chat(user1, user2):
             if user2_task in done:
                 message = json.loads(user2_task.result())
                 if message["type"] == "endChat":
+                    print("[INFO] User2 ended the chat.")
+                    chat_ended = True  # Mark chat as ended
                     await end_chat_for_both(user1, user2)
                     break
                 translated_message = await translate_message(message["text"], user_languages[user2], user_languages[user1])
                 await user1.send(json.dumps({"type": "message", "text": translated_message}))
 
             for task in pending:
-                task.cancel()
+                task.cancel()  # Cancel remaining tasks
 
     except Exception as e:
         print(f"[ERROR] Exception in start_chat: {e}")
@@ -141,7 +149,6 @@ async def end_chat_for_both(user1, user2):
         await user2.close(code=1000)
     except Exception as e:
         print(f"[ERROR] Error while sending survey or closing connections: {e}")
-
 
 
 def remove_user_from_active(user):
@@ -182,6 +189,17 @@ async def translate_message(message, source_language, target_language):
         print(f"[ERROR] OpenAI API call failed: {e}")
         return "Translation error."
 
+async def chat_timer_task(user1, user2):
+    """
+    Timer task that runs for 3 minutes and ends the chat when the timer expires.
+    """
+    try:
+        print(f"[INFO] Timer started for users {id(user1)} and {id(user2)}.")
+        await asyncio.sleep(180)  # Wait for 3 minutes
+        print("[INFO] Chat timer expired. Ending chat.")
+        await end_chat_for_both(user1, user2)
+    except asyncio.CancelledError:
+        print(f"[INFO] Chat timer cancelled for users {id(user1)} and {id(user2)}.")
 
 
 if __name__ == '__main__':
