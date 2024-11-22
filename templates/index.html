@@ -149,27 +149,45 @@
         <!-- Survey Section -->
         <div id="survey">
             <h3>Survey</h3>
-            <label>How engaging was your conversation?</label>
+            <label>How would you rate your conversation on engagement, where 1 is very unengaging and 5 is super engaging?</label>
             <select id="engagementRating">
-                <option value="1">1 (Very Unengaging)</option>
+                <option value="" disabled selected>Select</option>
+                <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
                 <option value="4">4</option>
-                <option value="5">5 (Very Engaging)</option>
+                <option value="5">5</option>
             </select>
-
-            <label>How would you rate the translation quality?</label>
+        
+            <label>How would you rate your conversation on friendliness, where 1 is very unfriendly and 5 is super friendly?</label>
+            <select id="friendlinessRating">
+                <option value="" disabled selected>Select</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+        
+            <label>How would you rate the conversation quality overall, where 1 is very bad and 5 is very good?</label>
+            <select id="overallRating">
+                <option value="" disabled selected>Select</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+        
+            <label>Do you think you were chatting with a native speaker of the language you chose?</label>
             <select id="translationRating">
-                <option value="1">1 (Poor)</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5 (Excellent)</option>
+                <option value="" disabled selected>Select</option>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
             </select>
-
+        
             <button onclick="submitSurvey()">Submit Feedback</button>
         </div>
-    </div>
 
     <script>
         let socket;
@@ -198,6 +216,10 @@
                         messageElement.textContent = data.text;
                         document.getElementById("messages").appendChild(messageElement);
                         document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+                    } else if (data.type === "survey") {
+                        // Display the survey for the user
+                        document.getElementById("chat").style.display = "none";
+                        document.getElementById("survey").style.display = "block";
                     }
                 };
 
@@ -238,9 +260,20 @@
 
         function submitSurvey() {
             const engagementRating = document.getElementById("engagementRating").value;
+            const friendlinessRating = document.getElementById("friendlinessRating").value;
+            const overallRating = document.getElementById("overallRating").value;
             const translationRating = document.getElementById("translationRating").value;
-            alert(`Thank you for your feedback!\nEngagement: ${engagementRating}\nTranslation: ${translationRating}`);
 
+            if (!engagementRating || !friendlinessRating || !overallRating || !translationRating) {
+                alert("Please answer all the survey questions before submitting.");
+                return;
+            }
+
+            alert(`Thank you for your feedback!
+        Engagement: ${engagementRating}
+        Friendliness: ${friendlinessRating}
+        Overall Quality: ${overallRating}
+        Native Speaker: ${translationRating === "1" ? "Yes" : "No"}`);
             document.getElementById("survey").style.display = "none";
         }
     </script>

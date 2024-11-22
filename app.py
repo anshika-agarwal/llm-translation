@@ -125,8 +125,10 @@ async def end_chat_for_both(user1, user2):
     survey = {
         "type": "survey",
         "questions": [
-            "How would you rate your conversation on engagement?",
-            "How would you rate the translation quality?",
+            "How engaging was your conversation?",
+            "How friendly was your conversation?",
+            "How would you rate the overall quality of the conversation?",
+            "Do you believe your chat partner was a native speaker?"
         ]
     }
     try:
