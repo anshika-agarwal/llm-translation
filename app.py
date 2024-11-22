@@ -81,49 +81,6 @@ async def pair_users():
         asyncio.create_task(start_chat(user1, user2))        
 
 
-# async def start_chat(user1, user2):
-#     """
-#     Handle chat between two paired users.
-#     Ends when a user sends an endChat message or the timer expires.
-#     """
-#     try:
-#         chat_ended = False  # Track whether the chat has already ended
-
-#         while not chat_ended:
-#             user1_task = asyncio.create_task(user1.receive())
-#             user2_task = asyncio.create_task(user2.receive())
-
-#             done, pending = await asyncio.wait(
-#                 [user1_task, user2_task],
-#                 return_when=asyncio.FIRST_COMPLETED,
-#             )
-
-#             if user1_task in done:
-#                 message = json.loads(user1_task.result())
-#                 if message["type"] == "endChat":
-#                     print("[INFO] User1 ended the chat.")
-#                     chat_ended = True  # Mark chat as ended
-#                     await end_chat_for_both(user1, user2)
-#                     break
-#                 translated_message = await translate_message(message["text"], user_languages[user1], user_languages[user2])
-#                 await user2.send(json.dumps({"type": "message", "text": translated_message}))
-
-#             if user2_task in done:
-#                 message = json.loads(user2_task.result())
-#                 if message["type"] == "endChat":
-#                     print("[INFO] User2 ended the chat.")
-#                     chat_ended = True  # Mark chat as ended
-#                     await end_chat_for_both(user1, user2)
-#                     break
-#                 translated_message = await translate_message(message["text"], user_languages[user2], user_languages[user1])
-#                 await user1.send(json.dumps({"type": "message", "text": translated_message}))
-
-#             for task in pending:
-#                 task.cancel()  # Cancel remaining tasks
-
-#     except Exception as e:
-#         print(f"[ERROR] Exception in start_chat: {e}")
-
 async def start_chat(user1, user2):
     """
     Handle chat between two paired users.
