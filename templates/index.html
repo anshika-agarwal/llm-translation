@@ -129,6 +129,13 @@
         #end-chat:hover {
             background: linear-gradient(135deg, #e04343, #e05959);
         }
+
+        #typing-indicator {
+            display: none;
+            font-style: italic;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -147,9 +154,10 @@
         <!-- Chat Section -->
         <div id="chat">
             <h3>Chat Room</h3>
-            <div id="timer">Chat Time Remaining: 3:00</div> <!-- Timer Display -->
+            <div id="timer">Time Remaining: 3:00</div> <!-- Timer Display -->
             <div id="messages"></div>
-            <input id="message" type="text" placeholder="Type your message here..." />
+            <div id="typing-indicator">User is typing...</div>
+            <input id="message" type="text" placeholder="Type your message here..." oninput="sendTypingStatus()" />
             <button onclick="sendMessage()">Send</button>
             <button id="end-chat" onclick="endChat()">End Chat</button>
         </div>
@@ -200,7 +208,7 @@
 
     <script>
         let socket;
-        let userLanguage = '';
+        let typingTimeout;
 
         function findPair() {
             userLanguage = document.getElementById("language").value;
@@ -220,7 +228,6 @@
                         document.getElementById("chat").style.display = "block";
                         console.log(data.message);
                     } else if (data.type === "timer") {
-                        // Update the timer display
                         const minutes = Math.floor(data.remaining_time / 60);
                         const seconds = data.remaining_time % 60;
                         document.getElementById("timer").textContent = 
@@ -231,6 +238,13 @@
                         messageElement.textContent = data.text;
                         document.getElementById("messages").appendChild(messageElement);
                         document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+                        document.getElementById("typing-indicator").style.display = "none"; // Hide typing indicator
+                    } else if (data.type === "typing") {
+                        if (data.status === "typing") {
+                            document.getElementById("typing-indicator").style.display = "block";
+                        } else {
+                            document.getElementById("typing-indicator").style.display = "none";
+                        }
                     } else if (data.type === "survey") {
                         document.getElementById("chat").style.display = "none";
                         document.getElementById("survey").style.display = "block";
@@ -262,6 +276,22 @@
 
                 document.getElementById("message").value = '';
             }
+        }
+
+        function sendTypingStatus() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: "typing" }));
+            }
+
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+            }
+
+            typingTimeout = setTimeout(() => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: "stopTyping" }));
+                }
+            }, 3000);
         }
 
         function endChat() {
