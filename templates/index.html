@@ -68,6 +68,13 @@
             display: none;
         }
 
+        #timer {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ff4c4c;
+            margin-bottom: 10px;
+        }
+
         #messages {
             max-height: 300px;
             overflow-y: auto;
@@ -140,6 +147,7 @@
         <!-- Chat Section -->
         <div id="chat">
             <h3>Chat Room</h3>
+            <div id="timer">Chat Time Remaining: 3:00</div> <!-- Timer Display -->
             <div id="messages"></div>
             <input id="message" type="text" placeholder="Type your message here..." />
             <button onclick="sendMessage()">Send</button>
@@ -188,6 +196,7 @@
         
             <button onclick="submitSurvey()">Submit Feedback</button>
         </div>
+    </div>
 
     <script>
         let socket;
@@ -210,6 +219,12 @@
                     if (data.type === "paired") {
                         document.getElementById("chat").style.display = "block";
                         console.log(data.message);
+                    } else if (data.type === "timer") {
+                        // Update the timer display
+                        const minutes = Math.floor(data.remaining_time / 60);
+                        const seconds = data.remaining_time % 60;
+                        document.getElementById("timer").textContent = 
+                            `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
                     } else if (data.type === "message") {
                         const messageElement = document.createElement("div");
                         messageElement.classList.add("message", "partner");
@@ -217,7 +232,6 @@
                         document.getElementById("messages").appendChild(messageElement);
                         document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
                     } else if (data.type === "survey") {
-                        // Display the survey for the user
                         document.getElementById("chat").style.display = "none";
                         document.getElementById("survey").style.display = "block";
                     }

@@ -189,17 +189,42 @@ async def translate_message(message, source_language, target_language):
         print(f"[ERROR] OpenAI API call failed: {e}")
         return "Translation error."
 
+# async def chat_timer_task(user1, user2):
+#     """
+#     Timer task that runs for 3 minutes and ends the chat when the timer expires.
+#     """
+#     try:
+#         print(f"[INFO] Timer started for users {id(user1)} and {id(user2)}.")
+#         await asyncio.sleep(180)  # Wait for 3 minutes
+#         print("[INFO] Chat timer expired. Ending chat.")
+#         await end_chat_for_both(user1, user2)
+#     except asyncio.CancelledError:
+#         print(f"[INFO] Chat timer cancelled for users {id(user1)} and {id(user2)}.")
+
 async def chat_timer_task(user1, user2):
     """
-    Timer task that runs for 3 minutes and ends the chat when the timer expires.
+    Timer task that runs for 3 minutes and sends periodic updates to users.
+    Ends the chat when the timer expires.
     """
     try:
+        total_time = 180  # Total chat duration in seconds
         print(f"[INFO] Timer started for users {id(user1)} and {id(user2)}.")
-        await asyncio.sleep(180)  # Wait for 3 minutes
+        for remaining_time in range(total_time, 0, -1):  # Countdown loop
+            time_message = {
+                "type": "timer",
+                "remaining_time": remaining_time
+            }
+            # Send the remaining time to both users
+            await user1.send(json.dumps(time_message))
+            await user2.send(json.dumps(time_message))
+            await asyncio.sleep(1)  # Wait 1 second
+
+        # Time expired
         print("[INFO] Chat timer expired. Ending chat.")
         await end_chat_for_both(user1, user2)
     except asyncio.CancelledError:
         print(f"[INFO] Chat timer cancelled for users {id(user1)} and {id(user2)}.")
+
 
 
 if __name__ == '__main__':
