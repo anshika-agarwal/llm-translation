@@ -136,6 +136,10 @@
             color: #666;
             margin-top: 5px;
         }
+
+        #language-selection {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -143,13 +147,15 @@
         <h1>LLM Turing Test</h1>
 
         <!-- Language Selection -->
-        <label for="language">Choose your language:</label>
-        <select id="language">
-            <option value="english">English</option>
-            <option value="chinese">Chinese</option>
-            <option value="spanish">Spanish</option>
-        </select>
-        <button onclick="findPair()">Find a Chat Partner</button>
+        <div id="language-selection">
+            <label for="language">Choose your language:</label>
+            <select id="language">
+                <option value="english">English</option>
+                <option value="chinese">Chinese</option>
+                <option value="spanish">Spanish</option>
+            </select>
+            <button onclick="findPair()">Find a Chat Partner</button>
+        </div>
 
         <!-- Chat Section -->
         <div id="chat">
@@ -226,6 +232,7 @@
 
                     if (data.type === "paired") {
                         document.getElementById("chat").style.display = "block";
+                        document.getElementById("language-selection").style.display = "none"; // Hide language selection
                         console.log(data.message);
                     } else if (data.type === "timer") {
                         const minutes = Math.floor(data.remaining_time / 60);
