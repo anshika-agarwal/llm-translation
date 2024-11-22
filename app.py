@@ -8,24 +8,27 @@ import json
 
 app = Quart(__name__)
 
-# Queue to store available users waiting for pairing
-available_users = []
+# Initialize OpenAI API client
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# Queues for user management
+waiting_room = []
+active_users = {}  # Active users as {user1: user2, user2: user1}
 # Dictionary to store language preferences for each user
 user_languages = {}
 
 # Initialize OpenAI API client
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route('/')
 async def index():
     return await render_template('index.html')
 
-
 @app.websocket('/ws')
 async def ws():
-    global available_users
+    global waiting_room, active_users
     current_user = websocket._get_current_object()
     user_id = id(current_user)
     print(f"[INFO] User {user_id} connected and waiting for a partner.")
@@ -37,26 +40,50 @@ async def ws():
         user_languages[current_user] = language_data["language"]
         print(f"[INFO] User {user_id} selected language: {language_data['language']}")
 
-    # Add user to queue and wait briefly to pair
-    available_users.append(current_user)
-    await asyncio.sleep(1)
+    # Add user to the waiting room
+    waiting_room.append(current_user)
 
-    # Pair users if possible
-    if len(available_users) > 1:
-        user1 = available_users.pop(0)
-        user2 = available_users.pop(0)
-        await user1.send("Paired! You can now chat.")
-        await user2.send("Paired! You can now chat.")
+    # Wait until paired
+    while current_user not in active_users:
+        if len(waiting_room) >= 2:
+            await pair_users()
+        await asyncio.sleep(1)
+
+    # Once paired, start chat
+    partner = active_users[current_user]
+    await start_chat(current_user, partner)
+
+    # Cleanup after chat ends
+    remove_user_from_active(current_user)
+
+
+async def pair_users():
+    """
+    Pair two users from the waiting room and add them to active_users.
+    """
+    global waiting_room, active_users
+
+    if len(waiting_room) >= 2:
+        user1 = waiting_room.pop(0)
+        user2 = waiting_room.pop(0)
+
+        active_users[user1] = user2
+        active_users[user2] = user1
+
+        # Notify both users they are paired
+        asyncio.create_task(user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
+        asyncio.create_task(user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
+
         print(f"[INFO] Paired User {id(user1)} with User {id(user2)}.")
 
-        # Relay messages between users with translation
-        await handle_pair(user1, user2)
-    else:
-        await websocket.send("Waiting for a partner to connect...")
-        await keep_alive(current_user)
+        # Start chat for both users
+        asyncio.create_task(start_chat(user1, user2))
 
 
-async def handle_pair(user1, user2):
+async def start_chat(user1, user2):
+    """
+    Handle chat between two paired users.
+    """
     try:
         while True:
             user1_task = asyncio.create_task(user1.receive())
@@ -68,23 +95,69 @@ async def handle_pair(user1, user2):
             )
 
             if user1_task in done:
-                message = json.loads(user1_task.result())["text"]
-                translated_message = await translate_message(message, user_languages[user1], user_languages[user2])
-                await user2.send(translated_message)
+                message = json.loads(user1_task.result())
+                if message["type"] == "endChat":
+                    await end_chat_for_both(user1, user2)
+                    break
+                translated_message = await translate_message(message["text"], user_languages[user1], user_languages[user2])
+                await user2.send(json.dumps({"type": "message", "text": translated_message}))
 
             if user2_task in done:
-                message = json.loads(user2_task.result())["text"]
-                translated_message = await translate_message(message, user_languages[user2], user_languages[user1])
-                await user1.send(translated_message)
+                message = json.loads(user2_task.result())
+                if message["type"] == "endChat":
+                    await end_chat_for_both(user1, user2)
+                    break
+                translated_message = await translate_message(message["text"], user_languages[user2], user_languages[user1])
+                await user1.send(json.dumps({"type": "message", "text": translated_message}))
 
             for task in pending:
                 task.cancel()
 
     except Exception as e:
-        print(f"[ERROR] Exception in handle_pair: {e}")
+        print(f"[ERROR] Exception in start_chat: {e}")
+
+
+async def end_chat_for_both(user1, user2):
+    """
+    Ends the chat for both users and sends them a survey.
+    """
+    print(f"[INFO] Ending chat between User {id(user1)} and User {id(user2)}.")
+    survey = {
+        "type": "survey",
+        "questions": [
+            "How would you rate your conversation on engagement?",
+            "How would you rate the translation quality?",
+        ]
+    }
+    try:
+        # Send the survey to both users
+        await user1.send(json.dumps(survey))
+        await user2.send(json.dumps(survey))
+
+        # Close the WebSocket connections with a normal close code (1000)
+        await user1.close(code=1000)
+        await user2.close(code=1000)
+    except Exception as e:
+        print(f"[ERROR] Error while sending survey or closing connections: {e}")
+
+
+
+def remove_user_from_active(user):
+    """
+    Remove a user from active_users and clean up their partner.
+    """
+    global active_users
+    if user in active_users:
+        partner = active_users.pop(user, None)
+        if partner:
+            active_users.pop(partner, None)
+            print(f"[INFO] Removed User {id(user)} and their partner {id(partner)} from active_users.")
 
 
 async def translate_message(message, source_language, target_language):
+    """
+    Translate the message using OpenAI API.
+    """
     language_map = {
         "english": "English",
         "chinese": "Chinese",
@@ -97,21 +170,16 @@ async def translate_message(message, source_language, target_language):
         return message  # No translation needed
 
     prompt = f"Translate the following {source} text to {target}: {message}"
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content.strip()
-
-
-async def keep_alive(user):
     try:
-        while True:
-            await asyncio.sleep(10)
-            await user.send("ping")
-            print(f"[INFO] Sent 'ping' to User {id(user)} to keep connection alive.")
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"[INFO] Connection closed for User {id(user)}: {e}")
+        print(f"[ERROR] OpenAI API call failed: {e}")
+        return "Translation error."
+
 
 
 if __name__ == '__main__':
