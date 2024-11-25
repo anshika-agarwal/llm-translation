@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Turing Test</title>
+    <title>Translation Turing Test</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -76,7 +76,7 @@
         }
 
         #messages {
-            max-height: 300px;
+            max-height: 500px;
             overflow-y: auto;
             padding: 10px;
             border: 1px solid #ddd;
@@ -148,11 +148,11 @@
 
         <!-- Language Selection -->
         <div id="language-selection">
-            <label for="language">Choose your language:</label>
+            <label for="language">What is your native/most fluent language?</label>
             <select id="language">
                 <option value="english">English</option>
                 <option value="chinese">Chinese</option>
-                <option value="spanish">Spanish</option>
+                <!-- <option value="spanish">Spanish</option> -->
             </select>
             <button onclick="findPair()">Find a Chat Partner</button>
         </div>

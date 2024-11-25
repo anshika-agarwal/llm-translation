@@ -15,13 +15,23 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Queues for user management
 waiting_room = []
 active_users = {}  # Active users as {user1: user2, user2: user1}
-# Dictionary to store language preferences for each user
-user_languages = {}
+user_languages = {}  # Language preferences for each user
 
 # Initialize OpenAI API client
-load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Database configuration
+DB_CONFIG = {
+    "dbname": os.getenv("DB_NAME"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "host": os.getenv("DB_HOST"),
+    "port": os.getenv("DB_PORT", "5432")
+}
+
+def get_db_connection():
+    return psycopg2.connect(**DB_CONFIG)
+    
 @app.route('/')
 async def index():
     return await render_template('index.html')
@@ -101,7 +111,7 @@ async def start_chat(user1, user2):
             if user1_task in done:
                 message = json.loads(user1_task.result())
                 if message["type"] == "endChat":
-                    print("[INFO] User1 ended the chat.")
+                    print(f"[INFO] User {id(user1)} ended the chat.")
                     chat_ended = True
                     await end_chat_for_both(user1, user2)
                     break
@@ -118,7 +128,7 @@ async def start_chat(user1, user2):
             if user2_task in done:
                 message = json.loads(user2_task.result())
                 if message["type"] == "endChat":
-                    print("[INFO] User2 ended the chat.")
+                    print(f"[INFO] User {id(user2)} ended the chat.")
                     chat_ended = True
                     await end_chat_for_both(user1, user2)
                     break
@@ -141,7 +151,7 @@ async def start_chat(user1, user2):
 
 async def end_chat_for_both(user1, user2):
     """
-    Ends the chat for both users and sends them a survey.
+    Ends the chat for both users, notifies them, and sends a survey.
     """
     print(f"[INFO] Ending chat between User {id(user1)} and User {id(user2)}.")
     survey = {
