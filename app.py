@@ -126,7 +126,7 @@ async def ws():
 
     # Once paired, start chat
     partner = active_users[current_user]
-    await start_chat(current_user, partner)
+    await start_chat(current_user, partner, conversation_id)
 
     # Cleanup after chat ends
     remove_user_from_active(current_user)
