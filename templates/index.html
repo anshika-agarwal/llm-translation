@@ -144,7 +144,7 @@
 </head>
 <body>
     <div id="container">
-        <h1>LLM Turing Test</h1>
+        <h1>Translation Turing Test</h1>
 
         <!-- Language Selection -->
         <div id="language-selection">
@@ -246,13 +246,24 @@
 
         function findPair() {
             userLanguage = document.getElementById("language").value;
+            const question1 = document.getElementById("question1").value;
+            const question2 = document.getElementById("question2").value;
+            const question3 = document.getElementById("question3").value;
 
             if (!socket || socket.readyState === WebSocket.CLOSED) {
                 socket = new WebSocket(`ws://${window.location.host}/ws`);
 
                 socket.onopen = () => {
                     console.log("Connected to WebSocket");
-                    socket.send(JSON.stringify({ type: "language", language: userLanguage }));
+
+                    // Send language and question responses
+                    socket.send(JSON.stringify({
+                        type: "language",
+                        language: userLanguage,
+                        question1: question1,
+                        question2: question2,
+                        question3: question3
+                    }));
                 };
 
                 socket.onmessage = (event) => {
