@@ -1,5 +1,5 @@
-dotenv==0.21.0
-openai==0.27.8
-quart==0.18.3
+dotenv
+openai
+quart
 asyncio
-psycopg2-binary==2.9.7
+psycopg2-binary
