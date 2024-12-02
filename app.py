@@ -69,7 +69,7 @@ async def ws():
 
 async def pair_users():
     """
-    Pair two users from the waiting room and add them to active_users.
+    Pair two users from the waiting room, add them to active_users, and insert their conversation details into the database.
     """
     global waiting_room, active_users
 
@@ -77,26 +77,57 @@ async def pair_users():
         user1 = waiting_room.pop(0)
         user2 = waiting_room.pop(0)
 
+        user1_lang = user_languages.get(user1, "unknown")
+        user2_lang = user_languages.get(user2, "unknown")
+        group = "control" if user1_lang == user2_lang else "experiment"
+
         active_users[user1] = user2
         active_users[user2] = user1
 
-        # Notify both users they are paired
-        asyncio.create_task(user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
-        asyncio.create_task(user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
+        conversation_id = None
 
-        print(f"[INFO] Paired User {id(user1)} with User {id(user2)}.")
+        try:
+            conn = get_db_connection()
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO conversations (
+                        user1_id, user2_id, user1_lang, user2_lang, "group", model, conversation_history
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING conversation_id
+                """, (
+                    id(user1), id(user2), user1_lang, user2_lang, group,
+                    'gpt-3.5-turbo', Json([])
+                ))
+                conversation_id = cursor.fetchone()[0]
+                conn.commit()
 
-        # Start the chat timer and the chat session concurrently
-        asyncio.create_task(chat_timer_task(user1, user2))
-        asyncio.create_task(start_chat(user1, user2))        
+            print(f"[INFO] Paired User {id(user1)} with User {id(user2)} in conversation {conversation_id}.")
+
+            # Notify users they are paired
+            await asyncio.gather(
+                user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})),
+                user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"}))
+            )
+
+            # Start the chat timer and the chat session concurrently
+            asyncio.create_task(chat_timer_task(user1, user2))
+            asyncio.create_task(start_chat(user1, user2, conversation_id))
+
+        except Exception as e:
+            print(f"[ERROR] Failed to pair users or insert conversation into the database: {e}")
+        finally:
+            if conn:
+                conn.close()
 
 
-async def start_chat(user1, user2):
+async def start_chat(user1, user2, conversation_id):
     """
     Handle chat between two paired users.
     Ends when a user sends an endChat message or the timer expires.
+    Updates conversation history in the database.
     """
     try:
+        conn = get_db_connection()  # Establish database connection
         chat_ended = False  # Track whether the chat has already ended
 
         while not chat_ended:
@@ -125,6 +156,18 @@ async def start_chat(user1, user2):
                     translated_message = await translate_message(message["text"], user_languages[user1], user_languages[user2])
                     await user2.send(json.dumps({"type": "message", "text": translated_message}))
 
+                    # Update conversation history in the database
+                    with conn.cursor() as cursor:
+                        cursor.execute("""
+                            UPDATE conversations
+                            SET conversation_history = conversation_history || %s
+                            WHERE conversation_id = %s
+                        """, (
+                            Json([{"sender": id(user1), "text": message["text"], "translation": translated_message}]),
+                            conversation_id
+                        ))
+                        conn.commit()
+
             if user2_task in done:
                 message = json.loads(user2_task.result())
                 if message["type"] == "endChat":
@@ -142,11 +185,25 @@ async def start_chat(user1, user2):
                     translated_message = await translate_message(message["text"], user_languages[user2], user_languages[user1])
                     await user1.send(json.dumps({"type": "message", "text": translated_message}))
 
+                    # Update conversation history in the database
+                    with conn.cursor() as cursor:
+                        cursor.execute("""
+                            UPDATE conversations
+                            SET conversation_history = conversation_history || %s
+                            WHERE conversation_id = %s
+                        """, (
+                            Json([{"sender": id(user2), "text": message["text"], "translation": translated_message}]),
+                            conversation_id
+                        ))
+                        conn.commit()
+
             for task in pending:
                 task.cancel()  # Cancel remaining tasks
 
     except Exception as e:
         print(f"[ERROR] Exception in start_chat: {e}")
+    finally:
+        conn.close()  # Ensure database connection is closed
 
 
 async def end_chat_for_both(user1, user2):
