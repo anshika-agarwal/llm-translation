@@ -393,5 +393,5 @@ async def chat_timer_task(user1, user2):
 
 
 if __name__ == "__main__":
-    app.run(host="54.189.22.142", port=8000)
+    app.run(host="0.0.0.0", port=8000)
 
