@@ -148,6 +148,7 @@ async def pair_users():
 
         #group = 'control' if user_languages[user1] == user_languages[user2] else 'experiment'
         # Insert conversation details into the database
+
         try:
             conn = get_db_connection()
             with conn.cursor() as cursor:
@@ -392,6 +393,5 @@ async def chat_timer_task(user1, user2):
 
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
-
+if __name__ == '__main__':
+    app.run()
