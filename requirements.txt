@@ -1,6 +1,5 @@
-os  # Standard library, no need to install
-dotenv==0.21.0  # Provides `load_dotenv` functionality
-openai==0.27.8  # OpenAI's official Python client
-quart==0.18.3  # Quart web framework
-asyncio  # Standard library, no need to install
-psycopg2-binary==2.9.7  # PostgreSQL database adapter for Python
+dotenv==0.21.0
+openai==0.27.8
+quart==0.18.3
+asyncio
+psycopg2-binary==2.9.7
