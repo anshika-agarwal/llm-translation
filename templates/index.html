@@ -167,8 +167,16 @@
         <div id="language-selection">
             <label for="language">What is your native/most fluent language? This will be the language you chat in.</label>
             <select id="language">
-                <option value="english">English</option>
                 <option value="chinese">Chinese</option>
+                <option value="dutch">Dutch</option>
+                <option value="english">English</option>
+                <option value="french">French</option>
+                <option value="german">German</option>
+                <option value="hindi">Hindi</option>
+                <option value="italian">Italian</option>
+                <option value="japanese">Japanese</option>
+                <option value="korean">Korean</option>
+                <option value="spanish">Spanish</option>
             </select>
             
             <label for="question1">In general, how would you rate the quality of LLM translation compared to human expert translators?</label>
@@ -252,6 +260,21 @@
                 <option value="" disabled selected>Select</option>
                 <option value="1">Yes</option>
                 <option value="0">No</option>
+            </select>
+
+            <label>Which language do you think the person you are chatting with speaks?</label>
+            <select id="guessLanguage">
+                <option value="" disabled selected>Select</option>
+                <option value="chinese">Chinese</option>
+                <option value="dutch">Dutch</option>
+                <option value="english">English</option>
+                <option value="french">French</option>
+                <option value="german">German</option>
+                <option value="hindi">Hindi</option>
+                <option value="italian">Italian</option>
+                <option value="japanese">Japanese</option>
+                <option value="korean">Korean</option>
+                <option value="spanish">Spanish</option>
             </select>
 
             <label>Why did you believe your chat was a native speaker (or why not)?</label>
