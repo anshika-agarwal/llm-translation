@@ -109,16 +109,20 @@
             align-self: flex-start;
         }
 
-        #survey label, #language-selection label {
-            display: block;
+        #survey {
+            margin-top: 20px;
             margin-bottom: 10px;
-            margin-top: 20px; /* Adds spacing between questions */
+            display: none;
+            text-align: left;
         }
 
-        #survey select, #language-selection select {
+        #survey label, #survey select {
+            margin-bottom: 10px;
+        }
+
+        #language-selection select {
             margin-bottom: 20px; /* Ensures consistent spacing after dropdowns */
         }
-
 
         #end-chat {
             margin-top: 10px;
@@ -154,7 +158,7 @@
                 <option value="english">English</option>
                 <option value="chinese">Chinese</option>
             </select>
-
+            
             <label for="question1">In general, how would you rate the quality of LLM translation compared to human expert translators?</label>
             <select id="question1">
                 <option value="" disabled selected>Select</option>
