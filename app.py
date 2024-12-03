@@ -19,6 +19,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 waiting_room = []
 active_users = {}  # Active users as {user1: user2, user2: user1}
 user_languages = {}  # Language preferences for each user
+conversation_mapping = {}  # Maps users to their conversation_id
 
 # Initialize OpenAI API client
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -64,17 +65,19 @@ async def ws():
 
     # Once paired, start chat
     partner = active_users[current_user]
-    await start_chat(current_user, partner)
+    conversation_id = conversation_mapping.get(current_user)  # Get the conversation_id
 
+    if conversation_id is not None:
+        await start_chat(current_user, partner, conversation_id)
+    else:
+        print(f"[ERROR] Conversation ID not found for User {user_id}.")
+        await current_user.close(code=1011)  # Close WebSocket with an error code
     # Cleanup after chat ends
     remove_user_from_active(current_user)
 
 
 async def pair_users():
-    """
-    Pair two users from the waiting room and add them to active_users.
-    """
-    global waiting_room, active_users
+    global waiting_room, active_users, conversation_mapping
 
     if len(waiting_room) >= 2:
         user1 = waiting_room.pop(0)
@@ -82,16 +85,6 @@ async def pair_users():
 
         active_users[user1] = user2
         active_users[user2] = user1
-
-        # # Notify both users they are paired
-        # asyncio.create_task(user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
-        # asyncio.create_task(user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
-
-        # print(f"[INFO] Paired User {id(user1)} with User {id(user2)}.")
-
-        # # Start the chat timer and the chat session concurrently
-        # asyncio.create_task(chat_timer_task(user1, user2))
-        # asyncio.create_task(start_chat(user1, user2))  
 
         conn = None
 
@@ -104,11 +97,16 @@ async def pair_users():
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s)
                     RETURNING conversation_id
                 """, (
-                    id(user1), id(user2), user1_lang, user2_lang, group,
+                    id(user1), id(user2), user_languages.get(user1, "unknown"), user_languages.get(user2, "unknown"),
+                    "control" if user_languages[user1] == user_languages[user2] else "experiment",
                     'gpt-3.5-turbo', Json([])
                 ))
                 conversation_id = cursor.fetchone()[0]
                 conn.commit()
+
+                # Store conversation_id for both users
+                conversation_mapping[user1] = conversation_id
+                conversation_mapping[user2] = conversation_id
 
             print(f"[INFO] Paired User {id(user1)} with User {id(user2)} in conversation {conversation_id}.")
 
@@ -126,7 +124,7 @@ async def pair_users():
             print(f"[ERROR] Failed to pair users or insert conversation into the database: {e}")
         finally:
             if conn:
-                conn.close()      
+                conn.close()
 
 
 async def start_chat(user1, user2, conversation_id):
