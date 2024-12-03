@@ -122,14 +122,13 @@
         }
 
         input[type="radio"] {
-            margin: 0 5px 0 0; /* Adjust spacing around the radio button */
-            vertical-align: middle; /* Align radio button with text */
+            margin-right: 8px; /* Adds space between the button and the label */
+            vertical-align: middle; /* Aligns the button with the label */
         }
 
-        input[type="radio"] + label {
-            display: inline-block;
-            margin-right: 15px; /* Space between options */
-            vertical-align: middle; /* Align text with the radio button */
+        label {
+            display: inline-block; /* Ensures the label is inline with the button */
+            margin-right: 15px; /* Adds spacing between options */
         }
 
         #language-selection label {
@@ -263,8 +262,6 @@
                 <label for="er-5">5</label>
             </div>
     
-            <!-- Similar formatting for Friendliness and Overall Quality -->
-            <!-- Final survey questions -->
             <button onclick="submitSurvey()">Submit Feedback</button>
         </div>
     </div>    
