@@ -136,7 +136,9 @@ async def start_chat(user1, user2, conversation_id):
     Handle chat between two paired users.
     Ends when a user sends an endChat message or the timer expires.
     """
+    conn = None
     try:
+        conn = get_db_connection()
         chat_ended = False  # Track whether the chat has already ended
 
         while not chat_ended:
@@ -165,6 +167,18 @@ async def start_chat(user1, user2, conversation_id):
                     translated_message = await translate_message(message["text"], user_languages[user1], user_languages[user2])
                     await user2.send(json.dumps({"type": "message", "text": translated_message}))
 
+                    # Update conversation history
+                    with conn.cursor() as cursor:
+                        cursor.execute("""
+                            UPDATE conversations
+                            SET conversation_history = conversation_history || %s
+                            WHERE conversation_id = %s
+                        """, (
+                            Json([{"sender": id(user1), "text": message["text"], "translation": translated_message}]),
+                            conversation_id
+                        ))
+                        conn.commit()
+
             if user2_task in done:
                 message = json.loads(user2_task.result())
                 if message["type"] == "endChat":
@@ -182,11 +196,27 @@ async def start_chat(user1, user2, conversation_id):
                     translated_message = await translate_message(message["text"], user_languages[user2], user_languages[user1])
                     await user1.send(json.dumps({"type": "message", "text": translated_message}))
 
+                    # Update conversation history
+                    with conn.cursor() as cursor:
+                        cursor.execute("""
+                            UPDATE conversations
+                            SET conversation_history = conversation_history || %s
+                            WHERE conversation_id = %s
+                        """, (
+                            Json([{"sender": id(user2), "text": message["text"], "translation": translated_message}]),
+                            conversation_id
+                        ))
+                        conn.commit()
+
             for task in pending:
                 task.cancel()  # Cancel remaining tasks
 
     except Exception as e:
         print(f"[ERROR] Exception in start_chat: {e}")
+
+    finally:
+        if conn:
+            conn.close()  # Ensure database connection is closed
 
 
 async def end_chat_for_both(user1, user2):
