@@ -5,6 +5,7 @@ from openai import OpenAI
 from quart import Quart, render_template, websocket
 import asyncio
 import json
+import random
 
 import psycopg2
 from psycopg2.extras import Json
@@ -88,6 +89,10 @@ async def pair_users():
 
         conn = None
 
+        # Generate user IDs within the valid integer range
+        user1_id = random.randint(1, 2_147_483_647)
+        user2_id = random.randint(1, 2_147_483_647)
+
         try:
             conn = get_db_connection()
             with conn.cursor() as cursor:
@@ -97,7 +102,7 @@ async def pair_users():
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s)
                     RETURNING conversation_id
                 """, (
-                    id(user1), id(user2), user_languages.get(user1, "unknown"), user_languages.get(user2, "unknown"),
+                    user1_id, user2_id, user_languages.get(user1, "unknown"), user_languages.get(user2, "unknown"),
                     "control" if user_languages[user1] == user_languages[user2] else "experiment",
                     'gpt-3.5-turbo', Json([])
                 ))
@@ -108,7 +113,7 @@ async def pair_users():
                 conversation_mapping[user1] = conversation_id
                 conversation_mapping[user2] = conversation_id
 
-            print(f"[INFO] Paired User {id(user1)} with User {id(user2)} in conversation {conversation_id}.")
+            print(f"[INFO] Paired User {user1_id} with User {user2_id} in conversation {conversation_id}.")
 
             # Notify users they are paired
             await asyncio.gather(
@@ -125,7 +130,6 @@ async def pair_users():
         finally:
             if conn:
                 conn.close()
-
 
 async def start_chat(user1, user2, conversation_id):
     """
