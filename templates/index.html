@@ -62,7 +62,7 @@
             background: linear-gradient(135deg, #1d6fd9, #4569d8);
         }
 
-        #chat, #survey {
+        #chat {
             margin-top: 20px;
             text-align: left;
             display: none;
@@ -109,20 +109,44 @@
             align-self: flex-start;
         }
 
-        #survey label, #language-selection label {
+        #survey {
             margin-top: 20px;
+            margin-bottom: 10px;
+            display: none;
+            text-align: left;
+        }
+
+        #survey label {
             display: block;
+            margin-top: 20px; /* Adds spacing between questions */
         }
 
         input[type="radio"] {
-            margin-right: 10px;
-            vertical-align: middle;
+            margin-right: 10px; /* Adds spacing between the radio button and label */
+            vertical-align: middle; /* Aligns the radio button with the text */
+        }
+
+        label {
+            display: inline-block; /* Ensures the label stays inline with the button */
+            margin-right: 20px; /* Adds spacing between each option */
+        }
+
+
+        #language-selection label {
+            display: block;
+            margin-top: 20px; /* Adds spacing between questions */
+        }
+
+        #language-selection select {
+            margin-top: 10px; /* Adds spacing between the label and select dropdown */
+            margin-bottom: 20px
         }
 
         #end-chat {
             margin-top: 10px;
             background-color: #ff4c4c;
             background: linear-gradient(135deg, #ff4c4c, #ff6a6a);
+            display: inline-block;
         }
 
         #end-chat:hover {
@@ -135,47 +159,112 @@
             color: #666;
             margin-top: 5px;
         }
+
+        #language-selection {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div id="container">
         <h1>Translation Turing Test</h1>
-        
+    
+        <!-- Language Selection -->
         <div id="language-selection">
-            <label for="language">What is your native/most fluent language?</label>
+            <label for="language">
+                What is your native/most fluent language? This will be the language you chat in.
+            </label>
             <select id="language">
                 <option value="english">English</option>
                 <option value="chinese">Chinese</option>
             </select>
             
+            <!-- Question 1 -->
+            <label for="question1">
+                In general, how would you rate the quality of LLM translation compared to human expert translators?
+            </label>
+            <div id="question1">
+                <input type="radio" id="q1-1" name="question1" value="1">
+                <label for="q1-1">1 - Much worse</label>
+                <input type="radio" id="q1-2" name="question1" value="2">
+                <label for="q1-2">2 - Slightly worse</label>
+                <input type="radio" id="q1-3" name="question1" value="3">
+                <label for="q1-3">3 - About the same</label>
+                <input type="radio" id="q1-4" name="question1" value="4">
+                <label for="q1-4">4 - Slightly better</label>
+                <input type="radio" id="q1-5" name="question1" value="5">
+                <label for="q1-5">5 - Much better</label>
+            </div>
+    
+            <!-- Question 2 -->
+            <label for="question2">
+                Do you believe LLM translations can facilitate seamless conversations between people speaking different languages?
+            </label>
+            <div id="question2">
+                <input type="radio" id="q2-1" name="question2" value="1">
+                <label for="q2-1">1 - Strongly disagree</label>
+                <input type="radio" id="q2-2" name="question2" value="2">
+                <label for="q2-2">2 - Disagree</label>
+                <input type="radio" id="q2-3" name="question2" value="3">
+                <label for="q2-3">3 - Neutral</label>
+                <input type="radio" id="q2-4" name="question2" value="4">
+                <label for="q2-4">4 - Agree</label>
+                <input type="radio" id="q2-5" name="question2" value="5">
+                <label for="q2-5">5 - Strongly agree</label>
+            </div>
+    
+            <!-- Question 3 -->
+            <label for="question3">
+                How effective do you think LLMs are at avoiding the "translationese" problem (producing translations that sound unnatural or machine-like)?
+            </label>
+            <div id="question3">
+                <input type="radio" id="q3-1" name="question3" value="1">
+                <label for="q3-1">1 - Very ineffective</label>
+                <input type="radio" id="q3-2" name="question3" value="2">
+                <label for="q3-2">2 - Somewhat ineffective</label>
+                <input type="radio" id="q3-3" name="question3" value="3">
+                <label for="q3-3">3 - Neutral</label>
+                <input type="radio" id="q3-4" name="question3" value="4">
+                <label for="q3-4">4 - Somewhat effective</label>
+                <input type="radio" id="q3-5" name="question3" value="5">
+                <label for="q3-5">5 - Very effective</label>
+            </div>
+            
             <button onclick="findPair()">Find a Chat Partner</button>
         </div>
-
+    
+        <!-- Chat Section -->
         <div id="chat">
             <h3>Chat Room</h3>
-            <div id="timer">Time Remaining: 3:00</div>
+            <div id="timer">Time Remaining: 3:00</div> <!-- Timer Display -->
             <div id="messages"></div>
             <div id="typing-indicator">User is typing...</div>
             <input id="message" type="text" placeholder="Type your message here..." oninput="sendTypingStatus()" />
             <button onclick="sendMessage()">Send</button>
             <button id="end-chat" onclick="endChat()">End Chat</button>
         </div>
-
+    
+        <!-- Survey Section -->
         <div id="survey">
             <h3>Survey</h3>
-            <label for="question1">How would you rate your conversation?</label>
-            <div>
-                <input type="radio" id="q1-1" name="question1" value="1">
-                <label for="q1-1">1 - Very Poor</label>
-                <input type="radio" id="q1-2" name="question1" value="2">
-                <label for="q1-2">2 - Poor</label>
-                <input type="radio" id="q1-3" name="question1" value="3">
-                <label for="q1-3">3 - Neutral</label>
-                <input type="radio" id="q1-4" name="question1" value="4">
-                <label for="q1-4">4 - Good</label>
-                <input type="radio" id="q1-5" name="question1" value="5">
-                <label for="q1-5">5 - Excellent</label>
+            <label>
+                How would you rate your conversation on engagement, where 1 is very unengaging and 5 is super engaging?
+            </label>
+            <div id="engagementRating">
+                <input type="radio" id="er-1" name="engagementRating" value="1">
+                <label for="er-1">1</label>
+                <input type="radio" id="er-2" name="engagementRating" value="2">
+                <label for="er-2">2</label>
+                <input type="radio" id="er-3" name="engagementRating" value="3">
+                <label for="er-3">3</label>
+                <input type="radio" id="er-4" name="engagementRating" value="4">
+                <label for="er-4">4</label>
+                <input type="radio" id="er-5" name="engagementRating" value="5">
+                <label for="er-5">5</label>
             </div>
+    
+            <!-- Similar formatting for Friendliness and Overall Quality -->
+            <!-- Final survey questions -->
             <button onclick="submitSurvey()">Submit Feedback</button>
         </div>
     </div>    
