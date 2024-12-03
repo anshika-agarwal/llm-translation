@@ -240,7 +240,8 @@ async def end_chat_for_both(user1, user2, conversation_id):
             "How engaging was your conversation?",
             "How friendly was your conversation?",
             "How would you rate the overall quality of the conversation?",
-            "Do you believe your chat partner was a native speaker?"
+            "Do you believe your chat partner was a native speaker?",
+            "Why did you believe your chat was a native speaker (or why not)?"
         ]
     }
 
