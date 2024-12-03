@@ -6,6 +6,9 @@ from quart import Quart, render_template, websocket
 import asyncio
 import json
 
+import psycopg2
+from psycopg2.extras import Json
+
 app = Quart(__name__)
 
 # Initialize OpenAI API client
@@ -80,18 +83,53 @@ async def pair_users():
         active_users[user1] = user2
         active_users[user2] = user1
 
-        # Notify both users they are paired
-        asyncio.create_task(user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
-        asyncio.create_task(user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
+        # # Notify both users they are paired
+        # asyncio.create_task(user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
+        # asyncio.create_task(user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})))
 
-        print(f"[INFO] Paired User {id(user1)} with User {id(user2)}.")
+        # print(f"[INFO] Paired User {id(user1)} with User {id(user2)}.")
 
-        # Start the chat timer and the chat session concurrently
-        asyncio.create_task(chat_timer_task(user1, user2))
-        asyncio.create_task(start_chat(user1, user2))        
+        # # Start the chat timer and the chat session concurrently
+        # asyncio.create_task(chat_timer_task(user1, user2))
+        # asyncio.create_task(start_chat(user1, user2))  
+
+        conn = None
+
+        try:
+            conn = get_db_connection()
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO conversations (
+                        user1_id, user2_id, user1_lang, user2_lang, "group", model, conversation_history
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING conversation_id
+                """, (
+                    id(user1), id(user2), user1_lang, user2_lang, group,
+                    'gpt-3.5-turbo', Json([])
+                ))
+                conversation_id = cursor.fetchone()[0]
+                conn.commit()
+
+            print(f"[INFO] Paired User {id(user1)} with User {id(user2)} in conversation {conversation_id}.")
+
+            # Notify users they are paired
+            await asyncio.gather(
+                user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})),
+                user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"}))
+            )
+
+            # Start the chat timer and the chat session concurrently
+            asyncio.create_task(chat_timer_task(user1, user2))
+            asyncio.create_task(start_chat(user1, user2, conversation_id))
+
+        except Exception as e:
+            print(f"[ERROR] Failed to pair users or insert conversation into the database: {e}")
+        finally:
+            if conn:
+                conn.close()      
 
 
-async def start_chat(user1, user2):
+async def start_chat(user1, user2, conversation_id):
     """
     Handle chat between two paired users.
     Ends when a user sends an endChat message or the timer expires.
@@ -242,7 +280,7 @@ async def chat_timer_task(user1, user2):
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)
 
-    
+
 # import os
 # from dotenv import load_dotenv
 # import openai
