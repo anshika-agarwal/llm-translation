@@ -58,9 +58,9 @@ async def ws():
         print(f"[INFO] User {user_id} selected language: {user_languages[current_user]}")
 
         presurvey = {
-            "question1": language_data.get("question1"),
-            "question2": language_data.get("question2"),
-            "question3": language_data.get("question3")
+            "qualityRating": language_data.get("question1"),
+            "seamlessRating": language_data.get("question2"),
+            "translationeseRating": language_data.get("question3")
         }
         user_presurveys[current_user] = presurvey
         print(f"[INFO] User {user_id} presurvey data stored temporarily: {presurvey}")
@@ -264,6 +264,9 @@ async def end_chat_for_both(user1, user2, conversation_id):
         # Extract responses
         user1_response = json.loads(user1_response_task.result())
         user2_response = json.loads(user2_response_task.result())
+
+        print(f"[DEBUG] User1 Response: {user1_response}")
+        print(f"[DEBUG] User2 Response: {user2_response}")
 
         # Store survey results in the database
         conn = get_db_connection()
