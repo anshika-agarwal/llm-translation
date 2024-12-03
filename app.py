@@ -121,6 +121,9 @@ async def pair_users():
 
             print(f"[INFO] Paired User {user1_id} with User {user2_id} in conversation {conversation_id}.")
 
+            conversation_mapping[user1] = conversation_id
+            conversation_mapping[user2] = conversation_id
+            
             # Notify users they are paired
             await asyncio.gather(
                 user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})),
