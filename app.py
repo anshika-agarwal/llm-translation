@@ -135,6 +135,7 @@ async def start_chat(user1, user2, conversation_id):
     """
     Handle chat between two paired users.
     Ends when a user sends an endChat message or the timer expires.
+    Updates conversation history in the database.
     """
     conn = None
     try:
@@ -155,19 +156,19 @@ async def start_chat(user1, user2, conversation_id):
                 if message["type"] == "endChat":
                     print(f"[INFO] User {id(user1)} ended the chat.")
                     chat_ended = True
-                    await end_chat_for_both(user1, user2)
+                    await end_chat_for_both(user1, user2, conversation_id)
                     break
                 elif message["type"] == "typing":
-                    # Notify the other user that user1 is typing
                     await user2.send(json.dumps({"type": "typing", "status": "typing"}))
                 elif message["type"] == "stopTyping":
-                    # Notify the other user that user1 stopped typing
                     await user2.send(json.dumps({"type": "typing", "status": "stopped"}))
                 else:
-                    translated_message = await translate_message(message["text"], user_languages[user1], user_languages[user2])
+                    translated_message = await translate_message(
+                        message["text"], user_languages[user1], user_languages[user2]
+                    )
                     await user2.send(json.dumps({"type": "message", "text": translated_message}))
 
-                    # Update conversation history
+                    # Update conversation history in the database
                     with conn.cursor() as cursor:
                         cursor.execute("""
                             UPDATE conversations
@@ -184,19 +185,19 @@ async def start_chat(user1, user2, conversation_id):
                 if message["type"] == "endChat":
                     print(f"[INFO] User {id(user2)} ended the chat.")
                     chat_ended = True
-                    await end_chat_for_both(user1, user2)
+                    await end_chat_for_both(user1, user2, conversation_id)
                     break
                 elif message["type"] == "typing":
-                    # Notify the other user that user2 is typing
                     await user1.send(json.dumps({"type": "typing", "status": "typing"}))
                 elif message["type"] == "stopTyping":
-                    # Notify the other user that user2 stopped typing
                     await user1.send(json.dumps({"type": "typing", "status": "stopped"}))
                 else:
-                    translated_message = await translate_message(message["text"], user_languages[user2], user_languages[user1])
+                    translated_message = await translate_message(
+                        message["text"], user_languages[user2], user_languages[user1]
+                    )
                     await user1.send(json.dumps({"type": "message", "text": translated_message}))
 
-                    # Update conversation history
+                    # Update conversation history in the database
                     with conn.cursor() as cursor:
                         cursor.execute("""
                             UPDATE conversations
@@ -213,10 +214,9 @@ async def start_chat(user1, user2, conversation_id):
 
     except Exception as e:
         print(f"[ERROR] Exception in start_chat: {e}")
-
     finally:
         if conn:
-            conn.close()  # Ensure database connection is closed
+            conn.close()
 
 
 async def end_chat_for_both(user1, user2, conversation_id):
