@@ -116,12 +116,24 @@
             text-align: left;
         }
 
-        #survey label, #survey select {
-            margin-bottom: 10px;
+        #survey label {
+            display: block;
+            margin-top: 20px; /* Adds spacing between questions */
+        }
+
+        #survey select {
+            margin-top: 10px; /* Adds spacing between the label and select dropdown */
+            margin-bottom: 20px; /* Ensures spacing after each dropdown */
+        }
+
+        #language-selection label {
+            display: block;
+            margin-top: 20px; /* Adds spacing between questions */
         }
 
         #language-selection select {
-            margin-bottom: 20px; /* Ensures consistent spacing after dropdowns */
+            margin-top: 10px; /* Adds spacing between the label and select dropdown */
+            margin-bottom: 20px
         }
 
         #end-chat {
