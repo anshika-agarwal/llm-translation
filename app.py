@@ -219,9 +219,10 @@ async def start_chat(user1, user2, conversation_id):
             conn.close()  # Ensure database connection is closed
 
 
-async def end_chat_for_both(user1, user2):
+async def end_chat_for_both(user1, user2, conversation_id):
     """
     Ends the chat for both users, notifies them, and sends a survey.
+    Stores survey results in the database.
     """
     print(f"[INFO] Ending chat between User {id(user1)} and User {id(user2)}.")
     survey = {
@@ -233,16 +234,54 @@ async def end_chat_for_both(user1, user2):
             "Do you believe your chat partner was a native speaker?"
         ]
     }
+
+    conn = None
+
     try:
         # Send the survey to both users
         await user1.send(json.dumps(survey))
         await user2.send(json.dumps(survey))
 
+        # Wait for both users' responses
+        user1_response_task = asyncio.create_task(user1.receive())
+        user2_response_task = asyncio.create_task(user2.receive())
+
+        done, _ = await asyncio.wait(
+            [user1_response_task, user2_response_task],
+            return_when=asyncio.ALL_COMPLETED,
+        )
+
+        # Extract responses
+        user1_response = json.loads(user1_response_task.result())
+        user2_response = json.loads(user2_response_task.result())
+
+        # Store survey results in the database
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE conversations
+                SET user1_postsurvey = %s,
+                    user2_postsurvey = %s
+                WHERE conversation_id = %s
+            """, (
+                Json(user1_response),  # Store user1's survey response as JSON
+                Json(user2_response),  # Store user2's survey response as JSON
+                conversation_id       # Use the conversation ID to locate the record
+            ))
+            conn.commit()
+
+        print(f"[INFO] Stored survey results for conversation {conversation_id}.")
+
         # Close the WebSocket connections with a normal close code (1000)
         await user1.close(code=1000)
         await user2.close(code=1000)
+
     except Exception as e:
-        print(f"[ERROR] Error while sending survey or closing connections: {e}")
+        print(f"[ERROR] Error while handling survey or storing results: {e}")
+    finally:
+        if conn:
+            conn.close()
+
 
 
 def remove_user_from_active(user):
