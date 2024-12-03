@@ -121,9 +121,9 @@
             margin-top: 20px; /* Adds spacing between questions */
         }
 
-        #survey select {
-            margin-top: 10px; /* Adds spacing between the label and select dropdown */
-            margin-bottom: 20px; /* Ensures spacing after each dropdown */
+        #survey input[type="radio"] {
+            margin-top: 10px; /* Adds spacing between the label and radio buttons */
+            margin-bottom: 20px; /* Ensures spacing after each radio button */
         }
 
         #language-selection label {
@@ -172,34 +172,46 @@
             </select>
             
             <label for="question1">In general, how would you rate the quality of LLM translation compared to human expert translators?</label>
-            <select id="question1">
-                <option value="" disabled selected>Select</option>
-                <option value="1">Much worse</option>
-                <option value="2">Slightly worse</option>
-                <option value="3">About the same</option>
-                <option value="4">Slightly better</option>
-                <option value="5">Much better</option>
-            </select>
+            <div id="question1">
+                <input type="radio" id="q1-1" name="question1" value="1">
+                <label for="q1-1">1 - Much worse</label>
+                <input type="radio" id="q1-2" name="question1" value="2">
+                <label for="q1-2">2 - Slightly worse</label>
+                <input type="radio" id="q1-3" name="question1" value="3">
+                <label for="q1-3">3 - About the same</label>
+                <input type="radio" id="q1-4" name="question1" value="4">
+                <label for="q1-4">4 - Slightly better</label>
+                <input type="radio" id="q1-5" name="question1" value="5">
+                <label for="q1-5">5 - Much better</label>
+            </div>
 
             <label for="question2">Do you believe LLM translations can facilitate seamless conversations between people speaking different languages?</label>
-            <select id="question2">
-                <option value="" disabled selected>Select</option>
-                <option value="1">Strongly disagree</option>
-                <option value="2">Disagree</option>
-                <option value="3">Neutral</option>
-                <option value="4">Agree</option>
-                <option value="5">Strongly agree</option>
-            </select>
+            <div id="question2">
+                <input type="radio" id="q2-1" name="question2" value="1">
+                <label for="q2-1">1 - Strongly disagree</label>
+                <input type="radio" id="q2-2" name="question2" value="2">
+                <label for="q2-2">2 - Disagree</label>
+                <input type="radio" id="q2-3" name="question2" value="3">
+                <label for="q2-3">3 - Neutral</label>
+                <input type="radio" id="q2-4" name="question2" value="4">
+                <label for="q2-4">4 - Agree</label>
+                <input type="radio" id="q2-5" name="question2" value="5">
+                <label for="q2-5">5 - Strongly agree</label>
+            </div>
 
             <label for="question3">How effective do you think LLMs are at avoiding the "translationese" problem (producing translations that sound unnatural or machine-like)?</label>
-            <select id="question3">
-                <option value="" disabled selected>Select</option>
-                <option value="1">Very ineffective</option>
-                <option value="2">Somewhat ineffective</option>
-                <option value="3">Neutral</option>
-                <option value="4">Somewhat effective</option>
-                <option value="5">Very effective</option>
-            </select>
+            <div id="question3">
+                <input type="radio" id="q3-1" name="question3" value="1">
+                <label for="q3-1">1 - Very ineffective</label>
+                <input type="radio" id="q3-2" name="question3" value="2">
+                <label for="q3-2">2 - Somewhat ineffective</label>
+                <input type="radio" id="q3-3" name="question3" value="3">
+                <label for="q3-3">3 - Neutral</label>
+                <input type="radio" id="q3-4" name="question3" value="4">
+                <label for="q3-4">4 - Somewhat effective</label>
+                <input type="radio" id="q3-5" name="question3" value="5">
+                <label for="q3-5">5 - Very effective</label>
+            </div>
             <button onclick="findPair()">Find a Chat Partner</button>
         </div>
 
@@ -218,41 +230,54 @@
         <div id="survey">
             <h3>Survey</h3>
             <label>How would you rate your conversation on engagement, where 1 is very unengaging and 5 is super engaging?</label>
-            <select id="engagementRating">
-                <option value="" disabled selected>Select</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
+            <div id="engagementRating">
+                <input type="radio" id="er-1" name="engagementRating" value="1">
+                <label for="er-1">1</label>
+                <input type="radio" id="er-2" name="engagementRating" value="2">
+                <label for="er-2">2</label>
+                <input type="radio" id="er-3" name="engagementRating" value="3">
+                <label for="er-3">3</label>
+                <input type="radio" id="er-4" name="engagementRating" value="4">
+                <label for="er-4">4</label>
+                <input type="radio" id="er-5" name="engagementRating" value="5">
+                <label for="er-5">5</label>
+            </div>
         
             <label>How would you rate your conversation on friendliness, where 1 is very unfriendly and 5 is super friendly?</label>
-            <select id="friendlinessRating">
-                <option value="" disabled selected>Select</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
+            <div id="friendlinessRating">
+                <input type="radio" id="fr-1" name="friendlinessRating" value="1">
+                <label for="fr-1">1</label>
+                <input type="radio" id="fr-2" name="friendlinessRating" value="2">
+                <label for="fr-2">2</label>
+                <input type="radio" id="fr-3" name="friendlinessRating" value="3">
+                <label for="fr-3">3</label>
+                <input type="radio" id="fr-4" name="friendlinessRating" value="4">
+                <label for="fr-4">4</label>
+                <input type="radio" id="fr-5" name="friendlinessRating" value="5">
+                <label for="fr-5">5</label>
+            </div>
         
             <label>How would you rate the conversation quality overall, where 1 is very bad and 5 is very good?</label>
-            <select id="overallRating">
-                <option value="" disabled selected>Select</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
+            <div id="overallRating">
+                <input type="radio" id="or-1" name="overallRating" value="1">
+                <label for="or-1">1</label>
+                <input type="radio" id="or-2" name="overallRating" value="2">
+                <label for="or-2">2</label>
+                <input type="radio" id="or-3" name="overallRating" value="3">
+                <label for="or-3">3</label>
+                <input type="radio" id="or-4" name="overallRating" value="4">
+                <label for="or-4">4</label>
+                <input type="radio" id="or-5" name="overallRating" value="5">
+                <label for="or-5">5</label>
+            </div>
         
             <label>Do you think you were chatting with a native speaker of the language you chose?</label>
-            <select id="translationRating">
-                <option value="" disabled selected>Select</option>
-                <option value="1">Yes</option>
-                <option value="0">No</option>
-            </select>
+            <div id="translationRating">
+                <input type="radio" id="tr-yes" name="translationRating" value="1">
+                <label for="tr-yes">Yes</label>
+                <input type="radio" id="tr-no" name="translationRating" value="0">
+                <label for="tr-no">No</label>
+            </div>
 
             <label>Why did you believe your chat was a native speaker (or why not)?</label>
             <textarea id="nativeSpeakerReason" rows="4" placeholder="Please share your thoughts here..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; margin-bottom: 15px; box-sizing: border-box;"></textarea>
@@ -370,12 +395,13 @@
         }
 
         function submitSurvey() {
-            const engagementRating = document.getElementById("engagementRating").value;
-            const friendlinessRating = document.getElementById("friendlinessRating").value;
-            const overallRating = document.getElementById("overallRating").value;
-            const translationRating = document.getElementById("translationRating").value;
+            const engagementRating = document.querySelector('input[name="engagementRating"]:checked').value;
+            const friendlinessRating = document.querySelector('input[name="friendlinessRating"]:checked').value;
+            const overallRating = document.querySelector('input[name="overallRating"]:checked').value;
+            const translationRating = document.querySelector('input[name="translationRating"]:checked').value;
+            const nativeSpeakerReason = document.getElementById("nativeSpeakerReason").value;
 
-            if (!engagementRating || !friendlinessRating || !overallRating || !translationRating) {
+            if (!engagementRating || !friendlinessRating || !overallRating || !translationRating || !nativeSpeakerReason) {
                 alert("Please answer all the survey questions before submitting.");
                 return;
             }
@@ -384,7 +410,8 @@
         Engagement: ${engagementRating}
         Friendliness: ${friendlinessRating}
         Overall Quality: ${overallRating}
-        Native Speaker: ${translationRating === "1" ? "Yes" : "No"}`);
+        Native Speaker: ${translationRating === "1" ? "Yes" : "No"}
+        Native Speaker Reason: ${nativeSpeakerReason}`);
             document.getElementById("survey").style.display = "none";
         }
     </script>
