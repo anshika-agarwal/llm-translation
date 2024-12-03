@@ -114,7 +114,7 @@ async def pair_users():
                 """, (
                     user1_id, user2_id, user_languages[user1], user_languages[user2],
                     "control" if user_languages[user1] == user_languages[user2] else "experiment",
-                    'gpt-3.5-turbo', Json([]), Json(user_presurveys[user1]), Json(user_presurveys[user2])
+                    'gpt-4o-mini', Json([]), Json(user_presurveys[user1]), Json(user_presurveys[user2])
                 ))
                 conversation_id = cursor.fetchone()[0]
                 conn.commit()
@@ -123,7 +123,7 @@ async def pair_users():
 
             conversation_mapping[user1] = conversation_id
             conversation_mapping[user2] = conversation_id
-            
+
             # Notify users they are paired
             await asyncio.gather(
                 user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})),
@@ -323,7 +323,7 @@ async def translate_message(message, source_language, target_language):
     prompt = f"Translate the following {source} text to {target}: {message}"
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}]
         )
         return response.choices[0].message.content.strip()
