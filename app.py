@@ -48,12 +48,20 @@ async def ws():
     user_id = id(current_user)
     print(f"[INFO] User {user_id} connected and waiting for a partner.")
 
-    # Wait for the user to send their language preference
+    # Wait for the user to send their language preference and presurvey
     language_message = await websocket.receive()
     language_data = json.loads(language_message)
+
     if language_data["type"] == "language":
         user_languages[current_user] = language_data["language"]
-        print(f"[INFO] User {user_id} selected language: {language_data['language']}")
+        print(f"[INFO] User {user_id} selected language: {user_languages[current_user]}")
+
+        # Collect survey responses
+        question1 = language_data.get("question1")
+        question2 = language_data.get("question2")
+        question3 = language_data.get("question3")
+
+        print(f"[INFO] User {user_id} responses: Q1={question1}, Q2={question2}, Q3={question3}")
 
     # Add user to the waiting room
     waiting_room.append(current_user)
