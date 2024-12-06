@@ -227,6 +227,29 @@ async def start_chat(user1, user2, conversation_id):
         if conn:
             conn.close()
 
+async def get_survey_response(user, user_id):
+    """
+    Waits for a survey response from a user.
+    """
+    try:
+        # Wait for survey response
+        survey = await user.receive()
+        survey_data = json.loads(survey)
+
+        if survey_data["type"] == "survey":
+            print(f"[INFO] Received survey response from User {user_id}")
+            return {
+                "engagementRating": survey_data["engagementRating"],
+                "friendlinessRating": survey_data["friendlinessRating"],
+                "overallRating": survey_data["overallRating"],
+                "translationRating": survey_data.get("translationRating", ""),
+                "guessLanguage": survey_data.get("guessLanguage", ""),
+                "nativeSpeakerReason": survey_data.get("nativeSpeakerReason", ""),
+            }
+    except Exception as e:
+        print(f"[ERROR] Failed to get survey response from User {user_id}: {e}")
+        return None
+
 
 async def end_chat_for_both(user1, user2, conversation_id):
     print(f"[INFO] Ending chat between User {id(user1)} and User {id(user2)}.")
