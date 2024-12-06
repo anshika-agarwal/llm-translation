@@ -388,7 +388,6 @@
         function endChat() {
             if (socket) {
                 socket.send(JSON.stringify({ type: "endChat" }));
-                socket.close();
                 document.getElementById("end-chat").style.display = "none";
             }
         }
