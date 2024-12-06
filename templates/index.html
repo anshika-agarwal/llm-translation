@@ -406,7 +406,7 @@
                 return;
             }
 
-            socket.send(JSON.stringify({
+            const surveyData = {
                 type: "survey",
                 engagementRating,
                 friendlinessRating,
@@ -414,8 +414,10 @@
                 translationRating,
                 guessLanguage,
                 nativeSpeakerReason
-            }));
+            };
 
+            console.log("Submitting survey data:", surveyData); // <-- Check this in the browser console
+            socket.send(JSON.stringify(surveyData));
 
             alert(`Thank you for your feedback!
                 Engagement: ${engagementRating}
@@ -424,6 +426,6 @@
                 Native Speaker: ${translationRating === "1" ? "Yes" : "No"}`);
             document.getElementById("survey").style.display = "none";
         }
-    </script>
+
 </body>
 </html>
