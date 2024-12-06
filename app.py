@@ -234,58 +234,60 @@ async def end_chat_for_both(user1, user2, conversation_id):
     Stores survey results in the database.
     """
     print(f"[INFO] Ending chat between User {id(user1)} and User {id(user2)}.")
-    survey = {
-        "type": "survey",
-        "questions": [
-            "How engaging was your conversation?",
-            "How friendly was your conversation?",
-            "How would you rate the overall quality of the conversation?",
-            "Do you believe your chat partner was a native speaker?",
-            "Why did you believe your chat was a native speaker (or why not)?"
-        ]
-    }
 
-    conn = None
+    # Initialize variables to store survey responses
+    user1_response = None
+    user2_response = None
+
+    # Function to handle individual user responses
+    async def get_survey_response(user, user_id):
+        try:
+            survey = await user.receive()
+            survey_data = json.loads(survey)
+
+            if survey_data["type"] == "survey":
+                print(f"[INFO] Received survey response from User {user_id}")
+                return {
+                    "engagementRating": survey_data["engagementRating"],
+                    "friendlinessRating": survey_data["friendlinessRating"],
+                    "overallRating": survey_data["overallRating"],
+                    "translationRating": survey_data["translationRating"],
+                    "guessLanguage": survey_data.get("guessLanguage", ""),
+                    "nativeSpeakerReason": survey_data.get("nativeSpeakerReason", ""),
+                }
+        except Exception as e:
+            print(f"[ERROR] Failed to get survey response from User {user_id}: {e}")
+            return None
 
     try:
-        # Send the survey to both users
-        await user1.send(json.dumps(survey))
-        await user2.send(json.dumps(survey))
+        # Create tasks to wait for both users' responses
+        user1_task = asyncio.create_task(get_survey_response(user1, 1))
+        user2_task = asyncio.create_task(get_survey_response(user2, 2))
 
-        # Wait for both users' responses
-        user1_response_task = asyncio.create_task(user1.receive())
-        user2_response_task = asyncio.create_task(user2.receive())
-
-        done, _ = await asyncio.wait(
-            [user1_response_task, user2_response_task],
-            return_when=asyncio.ALL_COMPLETED,
-        )
-
-        # Extract responses
-        user1_response = json.loads(user1_response_task.result())
-        user2_response = json.loads(user2_response_task.result())
+        # Wait for both tasks to complete
+        user1_response, user2_response = await asyncio.gather(user1_task, user2_task)
 
         print(f"[DEBUG] User1 Response: {user1_response}")
         print(f"[DEBUG] User2 Response: {user2_response}")
 
         # Store survey results in the database
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                UPDATE conversations
-                SET user1_postsurvey = %s,
-                    user2_postsurvey = %s
-                WHERE conversation_id = %s
-            """, (
-                Json(user1_response),  # Store user1's survey response as JSON
-                Json(user2_response),  # Store user2's survey response as JSON
-                conversation_id       # Use the conversation ID to locate the record
-            ))
-            conn.commit()
+        if user1_response or user2_response:  # Ensure there's at least one valid response
+            conn = get_db_connection()
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE conversations
+                    SET user1_postsurvey = %s,
+                        user2_postsurvey = %s
+                    WHERE conversation_id = %s
+                """, (
+                    json.dumps(user1_response),  # Store user1's survey response as JSON
+                    json.dumps(user2_response),  # Store user2's survey response as JSON
+                    conversation_id             # Use the conversation ID to locate the record
+                ))
+                conn.commit()
+            print(f"[INFO] Stored survey results for conversation {conversation_id}.")
 
-        print(f"[INFO] Stored survey results for conversation {conversation_id}.")
-
-        # Close the WebSocket connections with a normal close code (1000)
+        # Close WebSocket connections with a normal close code (1000)
         await user1.close(code=1000)
         await user2.close(code=1000)
 
@@ -294,6 +296,7 @@ async def end_chat_for_both(user1, user2, conversation_id):
     finally:
         if conn:
             conn.close()
+        print("[INFO] Database connection closed.")
 
 
 

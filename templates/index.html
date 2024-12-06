@@ -398,27 +398,30 @@
             const friendlinessRating = document.getElementById("friendlinessRating").value;
             const overallRating = document.getElementById("overallRating").value;
             const translationRating = document.getElementById("translationRating").value;
+            const guessLanguage = document.getElementById("guessLanguage").value;
+            const nativeSpeakerReason = document.getElementById("nativeSpeakerReason").value;
 
-            if (!engagementRating || !friendlinessRating || !overallRating || !translationRating) {
+            if (!engagementRating || !friendlinessRating || !overallRating || !translationRating || guessLanguage || nativeSpeakerReason) {
                 alert("Please answer all the survey questions before submitting.");
                 return;
             }
 
             socket.send(JSON.stringify({
                 type: "survey",
-                engagementRating: document.getElementById("engagementRating").value,
-                friendlinessRating: document.getElementById("friendlinessRating").value,
-                overallRating: document.getElementById("overallRating").value,
-                translationRating: document.getElementById("translationRating").value,
-                conversationId: currentConversationId // Add the current conversation ID
+                engagementRating,
+                friendlinessRating,
+                overallRating,
+                translationRating,
+                guessLanguage,
+                nativeSpeakerReason
             }));
 
 
             alert(`Thank you for your feedback!
-        Engagement: ${engagementRating}
-        Friendliness: ${friendlinessRating}
-        Overall Quality: ${overallRating}
-        Native Speaker: ${translationRating === "1" ? "Yes" : "No"}`);
+                Engagement: ${engagementRating}
+                Friendliness: ${friendlinessRating}
+                Overall Quality: ${overallRating}
+                Native Speaker: ${translationRating === "1" ? "Yes" : "No"}`);
             document.getElementById("survey").style.display = "none";
         }
     </script>
