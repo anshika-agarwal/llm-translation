@@ -266,6 +266,11 @@ async def end_chat_for_both(user1, user2, conversation_id):
         user1_task = asyncio.create_task(get_survey_response(user1, 1))
         user2_task = asyncio.create_task(get_survey_response(user2, 2))
 
+        done, _ = await asyncio.wait(
+            [user1_response_task, user2_response_task],
+            return_when=asyncio.ALL_COMPLETED,
+        )
+        
         # Wait for both tasks to complete
         user1_response, user2_response = await asyncio.gather(user1_task, user2_task)
 
