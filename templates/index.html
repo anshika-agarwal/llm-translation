@@ -386,10 +386,15 @@
         }
 
         function endChat() {
-            if (socket) {
+            if (socket.readyState === WebSocket.OPEN) {
+                console.log("Sending endChat message");
                 socket.send(JSON.stringify({ type: "endChat" }));
-                document.getElementById("end-chat").style.display = "none";
+            } else {
+                console.error("WebSocket is not open; cannot send endChat message.");
             }
+
+            // Do NOT close the socket; keep it open for survey submission
+            document.getElementById("end-chat").style.display = "none";
         }
 
         function submitSurvey() {
