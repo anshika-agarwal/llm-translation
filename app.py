@@ -229,40 +229,23 @@ async def start_chat(user1, user2, conversation_id):
 
 
 async def end_chat_for_both(user1, user2, conversation_id):
-    """
-    Ends the chat for both users, notifies them, and sends a survey.
-    Stores survey results in the database.
-    """
     print(f"[INFO] Ending chat between User {id(user1)} and User {id(user2)}.")
 
-    # Initialize variables to store survey responses
+    survey_prompt = { "type": "survey" }
+
     conn = None
 
-    # Function to handle individual user responses
-    async def get_survey_response(user, user_id):
-        try:
-            survey = await user.receive()
-            survey_data = json.loads(survey)
-
-            if survey_data["type"] == "survey":
-                print(f"[INFO] Received survey response from User {user_id}")
-                return {
-                    "engagementRating": survey_data["engagementRating"],
-                    "friendlinessRating": survey_data["friendlinessRating"],
-                    "overallRating": survey_data["overallRating"],
-                    "translationRating": survey_data["translationRating"],
-                    "guessLanguage": survey_data["guessLanguage"],
-                    "nativeSpeakerReason": survey_data["nativeSpeakerReason"],
-                }
-        except Exception as e:
-            print(f"[ERROR] Failed to get survey response from User {user_id}: {e}")
-            return None
-
     try:
-        # Create tasks to wait for both users' responses
+        # Notify both users to complete the survey
+        await asyncio.gather(
+            user1.send(json.dumps(survey_prompt)),
+            user2.send(json.dumps(survey_prompt))
+        )
+
+        # Collect responses
         user1_response, user2_response = await asyncio.gather(
-            get_survey_response(user1, 1),
-            get_survey_response(user2, 2),
+            get_survey_response(user1, id(user1)),
+            get_survey_response(user2, id(user2))
         )
 
         print(f"[DEBUG] User1 Response: {user1_response}")
