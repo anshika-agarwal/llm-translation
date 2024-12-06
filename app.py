@@ -294,10 +294,6 @@ async def end_chat_for_both(user1, user2, conversation_id):
                 conn.commit()
             print(f"[INFO] Stored survey results for conversation {conversation_id}.")
 
-        # Close WebSocket connections with a normal close code (1000)
-        await user1.close(code=1000)
-        await user2.close(code=1000)
-
     except Exception as e:
         print(f"[ERROR] Error while handling survey or storing results: {e}")
     finally:
@@ -305,6 +301,11 @@ async def end_chat_for_both(user1, user2, conversation_id):
             conn.close()
         print("[INFO] Database connection closed.")
 
+        await asyncio.gather(
+            user1.close(code=1000),
+            user2.close(code=1000)
+        )
+        print("[INFO] Websocket connection closed.")
 
 
 def remove_user_from_active(user):

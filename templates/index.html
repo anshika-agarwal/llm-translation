@@ -406,6 +406,13 @@
                 return;
             }
 
+            // Check WebSocket state
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                console.error("WebSocket is not open. Cannot send survey data.");
+                alert("Connection to the server has been lost. Your survey cannot be submitted.");
+                return;
+            }
+
             const surveyData = {
                 type: "survey",
                 engagementRating,
