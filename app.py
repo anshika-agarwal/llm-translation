@@ -258,6 +258,8 @@ async def end_chat_for_both(user1, user2, conversation_id):
         except Exception as e:
             print(f"[ERROR] Failed to get survey response from User {user_id}: {e}")
             return None
+    
+    conn = None
 
     try:
         # Create tasks to wait for both users' responses
