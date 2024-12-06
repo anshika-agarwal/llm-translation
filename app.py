@@ -161,62 +161,84 @@ async def start_chat(user1, user2, conversation_id):
             )
 
             if user1_task in done:
-                message = json.loads(user1_task.result())
-                if message["type"] == "endChat":
-                    print(f"[INFO] User {id(user1)} ended the chat.")
-                    chat_ended = True
-                    await end_chat_for_both(user1, user2, conversation_id)
-                    break
-                elif message["type"] == "typing":
-                    await user2.send(json.dumps({"type": "typing", "status": "typing"}))
-                elif message["type"] == "stopTyping":
-                    await user2.send(json.dumps({"type": "typing", "status": "stopped"}))
-                else:
-                    translated_message = await translate_message(
-                        message["text"], user_languages[user1], user_languages[user2]
-                    )
-                    await user2.send(json.dumps({"type": "message", "text": translated_message}))
+                try:
+                    message = json.loads(user1_task.result())
+                    if "type" not in message:
+                        print(f"[ERROR] Missing 'type' in message: {message}")
+                        continue
 
-                    # Update conversation history in the database
-                    with conn.cursor() as cursor:
-                        cursor.execute("""
-                            UPDATE conversations
-                            SET conversation_history = conversation_history || %s
-                            WHERE conversation_id = %s
-                        """, (
-                            Json([{"sender": id(user1), "text": message["text"], "translation": translated_message}]),
-                            conversation_id
-                        ))
-                        conn.commit()
+                    if message["type"] == "endChat":
+                        print(f"[INFO] User {id(user1)} ended the chat.")
+                        chat_ended = True
+                        await end_chat_for_both(user1, user2, conversation_id)
+                        break
+                    elif message["type"] == "typing":
+                        await user2.send(json.dumps({"type": "typing", "status": "typing"}))
+                    elif message["type"] == "stopTyping":
+                        await user2.send(json.dumps({"type": "typing", "status": "stopped"}))
+                    elif message["type"] == "message" and "text" in message:
+                        translated_message = await translate_message(
+                            message["text"], user_languages[user1], user_languages[user2]
+                        )
+                        await user2.send(json.dumps({"type": "message", "text": translated_message}))
+
+                        # Update conversation history in the database
+                        with conn.cursor() as cursor:
+                            cursor.execute("""
+                                UPDATE conversations
+                                SET conversation_history = conversation_history || %s
+                                WHERE conversation_id = %s
+                            """, (
+                                Json([{"sender": id(user1), "text": message["text"], "translation": translated_message}]),
+                                conversation_id
+                            ))
+                            conn.commit()
+                    else:
+                        print(f"[WARNING] Unhandled message type or missing 'text': {message}")
+                except json.JSONDecodeError as e:
+                    print(f"[ERROR] Failed to decode message from user1: {e}")
+                except Exception as e:
+                    print(f"[ERROR] Exception while processing user1 message: {e}")
 
             if user2_task in done:
-                message = json.loads(user2_task.result())
-                if message["type"] == "endChat":
-                    print(f"[INFO] User {id(user2)} ended the chat.")
-                    chat_ended = True
-                    await end_chat_for_both(user1, user2, conversation_id)
-                    break
-                elif message["type"] == "typing":
-                    await user1.send(json.dumps({"type": "typing", "status": "typing"}))
-                elif message["type"] == "stopTyping":
-                    await user1.send(json.dumps({"type": "typing", "status": "stopped"}))
-                else:
-                    translated_message = await translate_message(
-                        message["text"], user_languages[user2], user_languages[user1]
-                    )
-                    await user1.send(json.dumps({"type": "message", "text": translated_message}))
+                try:
+                    message = json.loads(user2_task.result())
+                    if "type" not in message:
+                        print(f"[ERROR] Missing 'type' in message: {message}")
+                        continue
 
-                    # Update conversation history in the database
-                    with conn.cursor() as cursor:
-                        cursor.execute("""
-                            UPDATE conversations
-                            SET conversation_history = conversation_history || %s
-                            WHERE conversation_id = %s
-                        """, (
-                            Json([{"sender": id(user2), "text": message["text"], "translation": translated_message}]),
-                            conversation_id
-                        ))
-                        conn.commit()
+                    if message["type"] == "endChat":
+                        print(f"[INFO] User {id(user2)} ended the chat.")
+                        chat_ended = True
+                        await end_chat_for_both(user1, user2, conversation_id)
+                        break
+                    elif message["type"] == "typing":
+                        await user1.send(json.dumps({"type": "typing", "status": "typing"}))
+                    elif message["type"] == "stopTyping":
+                        await user1.send(json.dumps({"type": "typing", "status": "stopped"}))
+                    elif message["type"] == "message" and "text" in message:
+                        translated_message = await translate_message(
+                            message["text"], user_languages[user2], user_languages[user1]
+                        )
+                        await user1.send(json.dumps({"type": "message", "text": translated_message}))
+
+                        # Update conversation history in the database
+                        with conn.cursor() as cursor:
+                            cursor.execute("""
+                                UPDATE conversations
+                                SET conversation_history = conversation_history || %s
+                                WHERE conversation_id = %s
+                            """, (
+                                Json([{"sender": id(user2), "text": message["text"], "translation": translated_message}]),
+                                conversation_id
+                            ))
+                            conn.commit()
+                    else:
+                        print(f"[WARNING] Unhandled message type or missing 'text': {message}")
+                except json.JSONDecodeError as e:
+                    print(f"[ERROR] Failed to decode message from user2: {e}")
+                except Exception as e:
+                    print(f"[ERROR] Exception while processing user2 message: {e}")
 
             for task in pending:
                 task.cancel()  # Cancel remaining tasks
