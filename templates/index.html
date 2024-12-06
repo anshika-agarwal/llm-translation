@@ -404,6 +404,16 @@
                 return;
             }
 
+            socket.send(JSON.stringify({
+                type: "survey",
+                engagementRating: document.getElementById("engagementRating").value,
+                friendlinessRating: document.getElementById("friendlinessRating").value,
+                overallRating: document.getElementById("overallRating").value,
+                translationRating: document.getElementById("translationRating").value,
+                conversationId: currentConversationId // Add the current conversation ID
+            }));
+
+
             alert(`Thank you for your feedback!
         Engagement: ${engagementRating}
         Friendliness: ${friendlinessRating}
