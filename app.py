@@ -236,8 +236,7 @@ async def end_chat_for_both(user1, user2, conversation_id):
     print(f"[INFO] Ending chat between User {id(user1)} and User {id(user2)}.")
 
     # Initialize variables to store survey responses
-    user1_response = None
-    user2_response = None
+    conn = None
 
     # Function to handle individual user responses
     async def get_survey_response(user, user_id):
@@ -252,27 +251,19 @@ async def end_chat_for_both(user1, user2, conversation_id):
                     "friendlinessRating": survey_data["friendlinessRating"],
                     "overallRating": survey_data["overallRating"],
                     "translationRating": survey_data["translationRating"],
-                    "guessLanguage": survey_data.get("guessLanguage", ""),
-                    "nativeSpeakerReason": survey_data.get("nativeSpeakerReason", ""),
+                    "guessLanguage": survey_data["guessLanguage"],
+                    "nativeSpeakerReason": survey_data["nativeSpeakerReason"],
                 }
         except Exception as e:
             print(f"[ERROR] Failed to get survey response from User {user_id}: {e}")
             return None
-    
-    conn = None
 
     try:
         # Create tasks to wait for both users' responses
-        user1_task = asyncio.create_task(get_survey_response(user1, 1))
-        user2_task = asyncio.create_task(get_survey_response(user2, 2))
-
-        done, _ = await asyncio.wait(
-            [user1_response_task, user2_response_task],
-            return_when=asyncio.ALL_COMPLETED,
+        user1_response, user2_response = await asyncio.gather(
+            get_survey_response(user1, 1),
+            get_survey_response(user2, 2),
         )
-        
-        # Wait for both tasks to complete
-        user1_response, user2_response = await asyncio.gather(user1_task, user2_task)
 
         print(f"[DEBUG] User1 Response: {user1_response}")
         print(f"[DEBUG] User2 Response: {user2_response}")
