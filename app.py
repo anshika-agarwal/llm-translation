@@ -232,8 +232,10 @@ async def get_survey_response(user, user_id):
     Waits for a survey response from a user.
     """
     try:
+        print(f"[DEBUG] Waiting for survey response from User {user_id}")
         # Wait for survey response
         survey = await user.receive()
+        print(f"[DEBUG] Received raw survey data from User {user_id}: {survey}")
         survey_data = json.loads(survey)
 
         if survey_data["type"] == "survey":
@@ -249,6 +251,7 @@ async def get_survey_response(user, user_id):
     except Exception as e:
         print(f"[ERROR] Failed to get survey response from User {user_id}: {e}")
         return None
+
 
 
 async def end_chat_for_both(user1, user2, conversation_id):
