@@ -142,10 +142,11 @@ async def pair_users():
 
 async def start_chat(user1, user2, conversation_id):
     conn = None
-    chat_ended = False
+    survey_submitted = {user1: False, user2: False}  # Track survey submission for both users
 
     try:
         conn = get_db_connection()
+        chat_ended = False
 
         while not chat_ended:
             user1_task = asyncio.create_task(user1.receive())
@@ -163,8 +164,19 @@ async def start_chat(user1, user2, conversation_id):
                         print(f"[ERROR] Missing 'type' in message: {message}")
                         continue
 
-                    # Handle survey message directly in the main loop
-                    if message["type"] == "survey":
+                    if message["type"] == "endChat":
+                        print(f"[INFO] User {id(user1) if task == user1_task else id(user2)} ended the chat.")
+                        chat_ended = True
+
+                        # Send survey prompts to both users
+                        survey_prompt = {"type": "survey"}
+                        await asyncio.gather(
+                            user1.send(json.dumps(survey_prompt)),
+                            user2.send(json.dumps(survey_prompt)),
+                        )
+                        print("[INFO] Sent survey prompts to both users.")
+
+                    elif message["type"] == "survey":
                         sender = user1 if task == user1_task else user2
                         print(f"[INFO] Received survey from User {id(sender)}: {message}")
 
@@ -178,21 +190,12 @@ async def start_chat(user1, user2, conversation_id):
                             conn.commit()
                         print(f"[INFO] Stored survey for User {id(sender)} in conversation {conversation_id}.")
 
-                    elif message["type"] == "endChat":
-                        print(f"[INFO] User {id(user1) if task == user1_task else id(user2)} ended the chat.")
-                        chat_ended = True
+                        survey_submitted[sender] = True  # Mark survey as submitted
 
-                        # Cancel remaining tasks
-                        for pending_task in pending:
-                            pending_task.cancel()
-
-                        # Send survey prompts to both users
-                        survey_prompt = {"type": "survey"}
-                        await asyncio.gather(
-                            user1.send(json.dumps(survey_prompt)),
-                            user2.send(json.dumps(survey_prompt)),
-                        )
-                        print("[INFO] Sent survey prompts to both users.")
+                        # Check if both users have submitted their surveys
+                        if all(survey_submitted.values()):
+                            print(f"[INFO] Surveys completed for conversation {conversation_id}.")
+                            chat_ended = True  # Ensure the loop ends
 
                     elif message["type"] == "typing":
                         target_user = user2 if task == user1_task else user1
@@ -240,9 +243,12 @@ async def start_chat(user1, user2, conversation_id):
         if conn:
             conn.close()
 
-        # Ensure WebSocket connections are closed
-        await asyncio.gather(safe_close(user1), safe_close(user2))
+        # Close connections only after all surveys are submitted
+        await asyncio.gather(
+            *[safe_close(user) for user, submitted in survey_submitted.items() if submitted],
+        )
         print("[INFO] WebSocket connections closed.")
+
 
 async def get_survey_response(user, user_id):
     """
@@ -353,9 +359,8 @@ async def safe_close(websocket):
     Safely close a WebSocket connection, catching any exceptions.
     """
     try:
-        if not websocket.closed:
-            await websocket.close()
-            print(f"[INFO] WebSocket {id(websocket)} closed successfully.")
+        await websocket.close()
+        print(f"[INFO] WebSocket {id(websocket)} closed successfully.")
     except Exception as e:
         print(f"[ERROR] Error while closing WebSocket {id(websocket)}: {e}")
 
