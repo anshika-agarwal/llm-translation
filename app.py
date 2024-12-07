@@ -141,15 +141,10 @@ async def pair_users():
                 conn.close()
 
 async def start_chat(user1, user2, conversation_id):
-    """
-    Handle chat between two paired users.
-    Ends when a user sends an endChat message or the timer expires.
-    Updates conversation history in the database.
-    """
     conn = None
+    chat_ended = False
     try:
         conn = get_db_connection()
-        chat_ended = False  # Track whether the chat has already ended
 
         while not chat_ended:
             user1_task = asyncio.create_task(user1.receive())
@@ -160,102 +155,31 @@ async def start_chat(user1, user2, conversation_id):
                 return_when=asyncio.FIRST_COMPLETED,
             )
 
-            if user1_task in done:
+            for task in done:
                 try:
-                    message = json.loads(user1_task.result())
+                    message = json.loads(task.result())
                     if "type" not in message:
                         print(f"[ERROR] Missing 'type' in message: {message}")
                         continue
 
                     if message["type"] == "endChat":
-                        print(f"[INFO] User {id(user1)} ended the chat.")
+                        print(f"[INFO] User {id(user1) if task == user1_task else id(user2)} ended the chat.")
                         chat_ended = True
+                        # Cancel pending tasks and pass control to end_chat_for_both
+                        for pending_task in pending:
+                            pending_task.cancel()
                         await end_chat_for_both(user1, user2, conversation_id)
-                        break
-                    elif message["type"] == "typing":
-                        await user2.send(json.dumps({"type": "typing", "status": "typing"}))
-                    elif message["type"] == "stopTyping":
-                        await user2.send(json.dumps({"type": "typing", "status": "stopped"}))
+                        return  # Exit the function after transferring control
                     elif message["type"] == "message" and "text" in message:
-                        translated_message = await translate_message(
-                            message["text"], user_languages[user1], user_languages[user2]
-                        )
-                        await user2.send(json.dumps({"type": "message", "text": translated_message}))
-
-                        # Update conversation history in the database
-                        with conn.cursor() as cursor:
-                            cursor.execute("""
-                                UPDATE conversations
-                                SET conversation_history = conversation_history || %s
-                                WHERE conversation_id = %s
-                            """, (
-                                Json([{"sender": id(user1), "text": message["text"], "translation": translated_message}]),
-                                conversation_id
-                            ))
-                            conn.commit()
-                    elif message["type"] == "survey":
-                        # Process survey data
+                        # Process regular chat messages
                         sender = user1 if task == user1_task else user2
-                        survey_data = {
-                            "engagementRating": message["engagementRating"],
-                            "friendlinessRating": message["friendlinessRating"],
-                            "overallRating": message["overallRating"],
-                            "translationRating": message.get("translationRating", ""),
-                            "guessLanguage": message.get("guessLanguage", ""),
-                            "nativeSpeakerReason": message.get("nativeSpeakerReason", ""),
-                        }
-                        print(f"[INFO] Received survey response from User {id(sender)}: {survey_data}")
-
-                        # Save the survey data to the appropriate user
-                        if sender == user1:
-                            user1_survey = survey_data
-                        else:
-                            user2_survey = survey_data
-
-                        # Store surveys in the database if both are received
-                        if user1_survey and user2_survey:
-                            with conn.cursor() as cursor:
-                                cursor.execute("""
-                                    UPDATE conversations
-                                    SET user1_postsurvey = %s,
-                                        user2_postsurvey = %s
-                                    WHERE conversation_id = %s
-                                """, (
-                                    Json(user1_survey),
-                                    Json(user2_survey),
-                                    conversation_id,
-                                ))
-                                conn.commit()
-                            print(f"[INFO] Stored survey responses for conversation {conversation_id}")
-
-                    else:
-                        print(f"[WARNING] Unhandled message type or missing 'text': {message}")
-                except json.JSONDecodeError as e:
-                    print(f"[ERROR] Failed to decode message from user1: {e}")
-                except Exception as e:
-                    print(f"[ERROR] Exception while processing user1 message: {e}")
-
-            if user2_task in done:
-                try:
-                    message = json.loads(user2_task.result())
-                    if "type" not in message:
-                        print(f"[ERROR] Missing 'type' in message: {message}")
-                        continue
-
-                    if message["type"] == "endChat":
-                        print(f"[INFO] User {id(user2)} ended the chat.")
-                        chat_ended = True
-                        await end_chat_for_both(user1, user2, conversation_id)
-                        break
-                    elif message["type"] == "typing":
-                        await user1.send(json.dumps({"type": "typing", "status": "typing"}))
-                    elif message["type"] == "stopTyping":
-                        await user1.send(json.dumps({"type": "typing", "status": "stopped"}))
-                    elif message["type"] == "message" and "text" in message:
+                        receiver = user2 if task == user1_task else user1
                         translated_message = await translate_message(
-                            message["text"], user_languages[user2], user_languages[user1]
+                            message["text"],
+                            user_languages[sender],
+                            user_languages[receiver],
                         )
-                        await user1.send(json.dumps({"type": "message", "text": translated_message}))
+                        await receiver.send(json.dumps({"type": "message", "text": translated_message}))
 
                         # Update conversation history in the database
                         with conn.cursor() as cursor:
@@ -264,19 +188,14 @@ async def start_chat(user1, user2, conversation_id):
                                 SET conversation_history = conversation_history || %s
                                 WHERE conversation_id = %s
                             """, (
-                                Json([{"sender": id(user2), "text": message["text"], "translation": translated_message}]),
-                                conversation_id
+                                Json([{"sender": id(sender), "text": message["text"], "translation": translated_message}]),
+                                conversation_id,
                             ))
                             conn.commit()
                     else:
                         print(f"[WARNING] Unhandled message type or missing 'text': {message}")
-                except json.JSONDecodeError as e:
-                    print(f"[ERROR] Failed to decode message from user2: {e}")
                 except Exception as e:
-                    print(f"[ERROR] Exception while processing user2 message: {e}")
-
-            for task in pending:
-                task.cancel()  # Cancel remaining tasks
+                    print(f"[ERROR] Exception while processing message: {e}")
 
     except Exception as e:
         print(f"[ERROR] Exception in start_chat: {e}")
@@ -310,25 +229,80 @@ async def get_survey_response(user, user_id):
         return None
 
 
-
 async def end_chat_for_both(user1, user2, conversation_id):
     print(f"[INFO] Ending chat between User {id(user1)} and User {id(user2)}.")
 
-    survey_prompt = { "type": "survey" }
+    survey_prompt = {"type": "survey"}
 
     try:
-        # Notify both users to complete the survey
+        # Send survey prompts to both users
         await asyncio.gather(
             user1.send(json.dumps(survey_prompt)),
             user2.send(json.dumps(survey_prompt))
         )
+        print("[INFO] Sent survey prompts to both users.")
+
+        # Wait for survey responses
+        user1_response_task = asyncio.create_task(user1.receive())
+        user2_response_task = asyncio.create_task(user2.receive())
+
+        done, _ = await asyncio.wait(
+            [user1_response_task, user2_response_task],
+            return_when=asyncio.ALL_COMPLETED,
+        )
+
+        # Process survey responses
+        user1_response, user2_response = None, None
+        for task in done:
+            try:
+                message = json.loads(task.result())
+                if message["type"] == "survey":
+                    if task == user1_response_task:
+                        user1_response = {
+                            "engagementRating": message["engagementRating"],
+                            "friendlinessRating": message["friendlinessRating"],
+                            "overallRating": message["overallRating"],
+                            "translationRating": message.get("translationRating", ""),
+                            "guessLanguage": message.get("guessLanguage", ""),
+                            "nativeSpeakerReason": message.get("nativeSpeakerReason", ""),
+                        }
+                        print(f"[INFO] Received survey from User {id(user1)}: {user1_response}")
+                    elif task == user2_response_task:
+                        user2_response = {
+                            "engagementRating": message["engagementRating"],
+                            "friendlinessRating": message["friendlinessRating"],
+                            "overallRating": message["overallRating"],
+                            "translationRating": message.get("translationRating", ""),
+                            "guessLanguage": message.get("guessLanguage", ""),
+                            "nativeSpeakerReason": message.get("nativeSpeakerReason", ""),
+                        }
+                        print(f"[INFO] Received survey from User {id(user2)}: {user2_response}")
+            except Exception as e:
+                print(f"[ERROR] Error processing survey message: {e}")
+
+        # Store responses in the database
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE conversations
+                SET user1_postsurvey = %s,
+                    user2_postsurvey = %s
+                WHERE conversation_id = %s
+            """, (
+                Json(user1_response) if user1_response else None,
+                Json(user2_response) if user2_response else None,
+                conversation_id,
+            ))
+            conn.commit()
+        print(f"[INFO] Stored survey results for conversation {conversation_id}.")
+
     except Exception as e:
-        print(f"[ERROR] Error while sending survey prompt: {e}")
+        print(f"[ERROR] Error in end_chat_for_both: {e}")
     finally:
         # Ensure WebSocket connections are closed
         await asyncio.gather(
-            user1.close(code=1000),
-            user2.close(code=1000)
+            safe_close(user1),
+            safe_close(user2),
         )
         print("[INFO] WebSocket connections closed.")
 
