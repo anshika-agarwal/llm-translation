@@ -184,20 +184,29 @@ async def start_chat(user1, user2, conversation_id):
 
                     elif message["type"] == "survey":
                         sender = user1 if task == user1_task else user2
-                        sender_uuid = websocket_to_uuid[sender]
-
-                        # Determine the correct column using the sender's UUID
-                        if sender_uuid == websocket_to_uuid[user1]:
-                            column = "user1_postsurvey"
-                        elif sender_uuid == websocket_to_uuid[user2]:
-                            column = "user2_postsurvey"
-                        else:
-                            print(f"[ERROR] Sender UUID {sender_uuid} not matched to user1 or user2!")
-                            return
-
-                        print(f"[DEBUG] Sender UUID {sender_uuid}, mapped to {column}.")
 
                         try:
+                            # Check which column is empty and determine where to store the survey
+                            with conn.cursor() as cursor:
+                                cursor.execute("""
+                                    SELECT user1_postsurvey, user2_postsurvey
+                                    FROM conversations
+                                    WHERE conversation_id = %s
+                                """, (conversation_id,))
+                                result = cursor.fetchone()
+
+                            user1_postsurvey, user2_postsurvey = result if result else (None, None)
+
+                            # Decide the column to update
+                            if not user1_postsurvey:
+                                column = "user1_postsurvey"
+                            elif not user2_postsurvey:
+                                column = "user2_postsurvey"
+                            else:
+                                print(f"[WARNING] Both columns are already filled for conversation {conversation_id}. Skipping.")
+                                return  # Both surveys are already stored; do nothing
+
+                            # Store the survey
                             with conn.cursor() as cursor:
                                 cursor.execute(f"""
                                     UPDATE conversations
@@ -205,14 +214,14 @@ async def start_chat(user1, user2, conversation_id):
                                     WHERE conversation_id = %s
                                 """, (Json(message), conversation_id))
                                 conn.commit()
+
                             print(f"[INFO] Stored {column} for User {id(sender)} in conversation {conversation_id}.")
+
                         except Exception as e:
-                            print(f"[ERROR] Failed to store survey for User {id(sender)}: {e}")
+                            print(f"[ERROR] Failed to store survey for User {id(sender)} in conversation {conversation_id}: {e}")
 
                         survey_submitted[sender] = True
 
-
-                        survey_submitted[sender] = True
 
                     elif message["type"] == "typing":
                         target_user = user2 if task == user1_task else user1
