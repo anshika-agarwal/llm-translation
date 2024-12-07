@@ -21,6 +21,7 @@ active_users = {}  # Active users as {user1: user2, user2: user1}
 user_languages = {}  # Language preferences for each user
 conversation_mapping = {}  # Maps users to their conversation_id
 user_presurveys = {}
+chat_timers = {}  # Maps conversation_id to its timer task
 
 # WebSocket-to-UUID mapping for persistent user IDs
 websocket_to_uuid = {}
@@ -136,10 +137,9 @@ async def pair_users():
                 user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!", "conversation_id": conversation_id}))
             )
 
-            # Start the chat timer and the chat session concurrently
-            asyncio.create_task(chat_timer_task(user1, user2))
+            timer_task = asyncio.create_task(chat_timer_task(user1, user2, conversation_id))
+            chat_timers[conversation_id] = timer_task
             asyncio.create_task(start_chat(user1, user2, conversation_id))
-
         except Exception as e:
             print(f"[ERROR] Failed to pair users or insert conversation into the database: {e}")
         finally:
@@ -173,6 +173,11 @@ async def start_chat(user1, user2, conversation_id):
                     if message["type"] == "endChat":
                         print(f"[INFO] User {id(user1) if task == user1_task else id(user2)} ended the chat.")
                         chat_ended = True
+
+                        if conversation_id in chat_timers:
+                            chat_timers[conversation_id].cancel()
+                            print(f"[INFO] Timer cancelled for conversation {conversation_id}.")
+                            del chat_timers[conversation_id]  # Remove the reference
 
                         await asyncio.gather(
                             user1.send(json.dumps({"type": "survey", "conversation_id": conversation_id, "message": f"Conversation {conversation_id} has ended."})),
@@ -302,13 +307,9 @@ async def translate_message(message, source_language, target_language):
     except Exception as e:
         print(f"[ERROR] OpenAI API call failed: {e}")
         return "Translation error."
+        
 
-
-async def chat_timer_task(user1, user2):
-    """
-    Timer task that runs for 3 minutes and sends periodic updates to users.
-    Ends the chat when the timer expires.
-    """
+async def chat_timer_task(user1, user2, conversation_id):
     try:
         total_time = 180  # Total chat duration in seconds
         print(f"[INFO] Timer started for users {id(user1)} and {id(user2)}.")
@@ -329,7 +330,7 @@ async def chat_timer_task(user1, user2):
             user2.send(json.dumps({"type": "expired", "conversation_id": conversation_id, "message": "Chat timer has expired."}))
         )
     except asyncio.CancelledError:
-        print(f"[INFO] Chat timer cancelled for users {id(user1)} and {id(user2)}.")
+        print(f"[INFO] Chat timer cancelled for conversation {conversation_id}.")
 
 
 async def safe_close(websocket):
