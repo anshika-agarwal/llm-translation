@@ -348,6 +348,18 @@ async def end_chat_for_both(user1, user2, conversation_id):
         print("[INFO] WebSocket connections closed.")
 
 
+async def safe_close(websocket):
+    """
+    Safely close a WebSocket connection, catching any exceptions.
+    """
+    try:
+        if not websocket.closed:
+            await websocket.close()
+            print(f"[INFO] WebSocket {id(websocket)} closed successfully.")
+    except Exception as e:
+        print(f"[ERROR] Error while closing WebSocket {id(websocket)}: {e}")
+
+
 def remove_user_from_active(user):
     """
     Remove a user from active_users and clean up their partner.
