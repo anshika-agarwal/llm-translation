@@ -279,59 +279,6 @@ async def start_chat(user1, user2, conversation_id):
         print("[INFO] WebSocket connections closed.")
 
 
-async def get_survey_response(user, user_id):
-    """
-    Waits for a survey response from a user.
-    """
-    try:
-        print(f"[DEBUG] Waiting for survey response from User {user_id}")
-        # Wait for survey response
-        survey = await user.receive()
-        print(f"[DEBUG] Received raw survey data from User {user_id}: {survey}")
-        survey_data = json.loads(survey)
-
-        if survey_data["type"] == "survey":
-            print(f"[INFO] Received survey response from User {user_id}")
-            return {
-                "engagementRating": survey_data["engagementRating"],
-                "friendlinessRating": survey_data["friendlinessRating"],
-                "overallRating": survey_data["overallRating"],
-                "translationRating": survey_data.get("translationRating", ""),
-                "guessLanguage": survey_data.get("guessLanguage", ""),
-                "nativeSpeakerReason": survey_data.get("nativeSpeakerReason", ""),
-            }
-    except Exception as e:
-        print(f"[ERROR] Failed to get survey response from User {user_id}: {e}")
-        return None
-
-
-async def end_chat_for_both(user1, user2, conversation_id):
-    print(f"HERE.")
-
-
-async def safe_close(websocket):
-    """
-    Safely close a WebSocket connection, catching any exceptions.
-    """
-    try:
-        await websocket.close()
-        print(f"[INFO] WebSocket {id(websocket)} closed successfully.")
-    except Exception as e:
-        print(f"[ERROR] Error while closing WebSocket {id(websocket)}: {e}")
-
-
-def remove_user_from_active(user):
-    """
-    Remove a user from active_users and clean up their partner.
-    """
-    global active_users
-    if user in active_users:
-        partner = active_users.pop(user, None)
-        if partner:
-            active_users.pop(partner, None)
-            print(f"[INFO] Removed User {id(user)} and their partner {id(partner)} from active_users.")
-
-
 async def translate_message(message, source_language, target_language):
     """
     Translate the message using OpenAI API.
@@ -357,6 +304,7 @@ async def translate_message(message, source_language, target_language):
     except Exception as e:
         print(f"[ERROR] OpenAI API call failed: {e}")
         return "Translation error."
+
 
 async def chat_timer_task(user1, user2):
     """
@@ -384,6 +332,30 @@ async def chat_timer_task(user1, user2):
         )
     except asyncio.CancelledError:
         print(f"[INFO] Chat timer cancelled for users {id(user1)} and {id(user2)}.")
+
+
+async def safe_close(websocket):
+    """
+    Safely close a WebSocket connection, catching any exceptions.
+    """
+    try:
+        await websocket.close()
+        print(f"[INFO] WebSocket {id(websocket)} closed successfully.")
+    except Exception as e:
+        print(f"[ERROR] Error while closing WebSocket {id(websocket)}: {e}")
+
+
+def remove_user_from_active(user):
+    """
+    Remove a user from active_users and clean up their partner.
+    """
+    global active_users
+    if user in active_users:
+        partner = active_users.pop(user, None)
+        if partner:
+            active_users.pop(partner, None)
+            print(f"[INFO] Removed User {id(user)} and their partner {id(partner)} from active_users.")
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)
