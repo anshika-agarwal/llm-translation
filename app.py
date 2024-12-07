@@ -181,21 +181,25 @@ async def start_chat(user1, user2, conversation_id):
                         print(f"[INFO] Received survey from User {id(sender)}: {message}")
 
                         # Update survey in the database
-                        with conn.cursor() as cursor:
-                            cursor.execute(f"""
-                                UPDATE conversations
-                                SET {"user1_postsurvey" if sender == user1 else "user2_postsurvey"} = %s
-                                WHERE conversation_id = %s
-                            """, (Json(message), conversation_id))
-                            conn.commit()
-                        print(f"[INFO] Stored survey for User {id(sender)} in conversation {conversation_id}.")
+                        column = "user1_postsurvey" if sender == user1 else "user2_postsurvey"
+                        try:
+                            with conn.cursor() as cursor:
+                                cursor.execute(f"""
+                                    UPDATE conversations
+                                    SET {column} = %s
+                                    WHERE conversation_id = %s
+                                """, (Json(message), conversation_id))
+                                conn.commit()
+                            print(f"[INFO] Stored {column} for User {id(sender)} in conversation {conversation_id}.")
+                        except Exception as e:
+                            print(f"[ERROR] Failed to store {column} for User {id(sender)}: {e}")
 
-                        survey_submitted[sender] = True  # Mark survey as submitted
+                        survey_submitted[sender] = True  # Mark this user's survey as submitted
 
-                        # Check if both users have submitted their surveys
+                        # Check if surveys from both users are submitted
                         if all(survey_submitted.values()):
                             print(f"[INFO] Surveys completed for conversation {conversation_id}.")
-                            chat_ended = True  # Ensure the loop ends
+                            chat_ended = True
 
                     elif message["type"] == "typing":
                         target_user = user2 if task == user1_task else user1
