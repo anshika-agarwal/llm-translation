@@ -178,10 +178,8 @@ async def start_chat(user1, user2, conversation_id):
 
                     elif message["type"] == "survey":
                         sender = user1 if task == user1_task else user2
-                        print(f"[INFO] Received survey from User {id(sender)}: {message}")
+                        column = "user1_postsurvey" if sender is user1 else "user2_postsurvey"
 
-                        # Update survey in the database
-                        column = "user1_postsurvey" if sender == user1 else "user2_postsurvey"
                         try:
                             with conn.cursor() as cursor:
                                 cursor.execute(f"""
@@ -194,12 +192,7 @@ async def start_chat(user1, user2, conversation_id):
                         except Exception as e:
                             print(f"[ERROR] Failed to store {column} for User {id(sender)}: {e}")
 
-                        survey_submitted[sender] = True  # Mark this user's survey as submitted
-
-                        # Check if surveys from both users are submitted
-                        if all(survey_submitted.values()):
-                            print(f"[INFO] Surveys completed for conversation {conversation_id}.")
-                            chat_ended = True
+                        survey_submitted[sender] = True
 
                     elif message["type"] == "typing":
                         target_user = user2 if task == user1_task else user1
