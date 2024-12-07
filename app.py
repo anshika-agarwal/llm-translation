@@ -5,8 +5,7 @@ from openai import OpenAI
 from quart import Quart, render_template, websocket
 import asyncio
 import json
-import random
-
+import uuid  # Use UUIDs for persistent user IDs
 import psycopg2
 from psycopg2.extras import Json
 
@@ -22,6 +21,9 @@ active_users = {}  # Active users as {user1: user2, user2: user1}
 user_languages = {}  # Language preferences for each user
 conversation_mapping = {}  # Maps users to their conversation_id
 user_presurveys = {}
+
+# WebSocket-to-UUID mapping for persistent user IDs
+websocket_to_uuid = {}
 
 # Initialize OpenAI API client
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -46,8 +48,12 @@ async def index():
 async def ws():
     global waiting_room, active_users
     current_user = websocket._get_current_object()
-    user_id = id(current_user)
-    print(f"[INFO] User {user_id} connected and waiting for a partner.")
+    websocket_id = id(current_user)  # Temporary ID for session tracking
+    user_uuid = str(uuid.uuid4())  # Persistent ID for database operations
+
+    # Map WebSocket ID to UUID
+    websocket_to_uuid[current_user] = user_uuid
+    print(f"[INFO] WebSocket {websocket_id} connected with UUID {user_uuid}.")
 
     # Wait for the user to send their language preference and presurvey
     language_message = await websocket.receive()
@@ -55,7 +61,7 @@ async def ws():
 
     if language_data["type"] == "language":
         user_languages[current_user] = language_data["language"]
-        print(f"[INFO] User {user_id} selected language: {user_languages[current_user]}")
+        print(f"[INFO] User {websocket_id} selected language: {user_languages[current_user]}")
 
         presurvey = {
             "qualityRating": language_data.get("question1"),
@@ -63,7 +69,7 @@ async def ws():
             "translationeseRating": language_data.get("question3")
         }
         user_presurveys[current_user] = presurvey
-        print(f"[INFO] User {user_id} presurvey data stored temporarily: {presurvey}")
+        print(f"[INFO] User {websocket_id} presurvey data stored temporarily: {presurvey}")
 
     # Add user to the waiting room
     waiting_room.append(current_user)
@@ -81,7 +87,7 @@ async def ws():
     if conversation_id is not None:
         await start_chat(current_user, partner, conversation_id)
     else:
-        print(f"[ERROR] Conversation ID not found for User {user_id}.")
+        print(f"[ERROR] Conversation ID not found for User {websocket_id}.")
         await current_user.close(code=1011)  # Close WebSocket with an error code
     # Cleanup after chat ends
     remove_user_from_active(current_user)
@@ -99,9 +105,9 @@ async def pair_users():
 
         conn = None
 
-        # Generate user IDs within the valid integer range
-        user1_id = id(user1)
-        user2_id = id(user2)
+        # Retrieve UUIDs for users
+        user1_id = websocket_to_uuid[user1]
+        user2_id = websocket_to_uuid[user2]
 
         try:
             conn = get_db_connection()
