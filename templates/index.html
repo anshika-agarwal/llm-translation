@@ -349,8 +349,8 @@
                     } else if (data.type === "survey" || data.type === "expired") {
                         console.log("Survey or expired message received:", data);
                         document.getElementById("chat").style.display = "none";
-                        document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`; 
                         document.getElementById("survey").style.display = "block";
+                        document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`; 
                         console.log(data.message);
                     }
                 };
@@ -449,7 +449,6 @@
                 Overall Quality: ${overallRating}
                 Native Speaker: ${translationRating === "1" ? "Yes" : "No"}`);
             document.getElementById("survey").style.display = "none";
-            document.getElementById("conversation-id").style.display = "none"; // Hide conversation ID after survey
         }
 
     </script>
