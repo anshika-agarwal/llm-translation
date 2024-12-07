@@ -173,7 +173,6 @@ async def start_chat(user1, user2, conversation_id):
                     if message["type"] == "endChat":
                         print(f"[INFO] User {id(user1) if task == user1_task else id(user2)} ended the chat.")
                         chat_ended = True
-                        chat_timer_task.cancel()  # Cancel the chat timer
                         await asyncio.gather(
                             user1.send(json.dumps({"type": "survey", "conversation_id": conversation_id, "message": f"Conversation {conversation_id} has ended."})),
                             user2.send(json.dumps({"type": "survey", "conversation_id": conversation_id, "message": f"Conversation {conversation_id} has ended."})),
