@@ -186,7 +186,11 @@ async def start_chat(user1, user2, conversation_id):
                         sender = user1 if task == user1_task else user2
 
                         try:
-                            # Check which column is empty and determine where to store the survey
+                            # Decide the primary column based on the sender
+                            primary_column = "user1_postsurvey" if sender == user1 else "user2_postsurvey"
+                            secondary_column = "user2_postsurvey" if primary_column == "user1_postsurvey" else "user1_postsurvey"
+
+                            # Check if columns are already filled
                             with conn.cursor() as cursor:
                                 cursor.execute("""
                                     SELECT user1_postsurvey, user2_postsurvey
@@ -197,16 +201,16 @@ async def start_chat(user1, user2, conversation_id):
 
                             user1_postsurvey, user2_postsurvey = result if result else (None, None)
 
-                            # Decide the column to update
-                            if not user1_postsurvey:
-                                column = "user1_postsurvey"
-                            elif not user2_postsurvey:
-                                column = "user2_postsurvey"
+                            # Determine where to store the survey
+                            if not (user1_postsurvey if primary_column == "user1_postsurvey" else user2_postsurvey):
+                                column = primary_column
+                            elif not (user2_postsurvey if primary_column == "user1_postsurvey" else user1_postsurvey):
+                                column = secondary_column
                             else:
                                 print(f"[WARNING] Both columns are already filled for conversation {conversation_id}. Skipping.")
                                 return  # Both surveys are already stored; do nothing
 
-                            # Store the survey
+                            # Store the survey in the determined column
                             with conn.cursor() as cursor:
                                 cursor.execute(f"""
                                     UPDATE conversations
@@ -221,6 +225,7 @@ async def start_chat(user1, user2, conversation_id):
                             print(f"[ERROR] Failed to store survey for User {id(sender)} in conversation {conversation_id}: {e}")
 
                         survey_submitted[sender] = True
+
 
 
                     elif message["type"] == "typing":
