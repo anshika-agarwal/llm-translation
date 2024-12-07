@@ -219,10 +219,11 @@
             <button onclick="findPair()">Find a Chat Partner</button>
         </div>
 
+        <div id="conversation-id"></div> <!-- Conversation ID Display -->
+
         <!-- Chat Section -->
         <div id="chat">
             <h3>Chat Room</h3>
-            <div id="conversation-id"></div> <!-- Conversation ID Display -->
             <div id="timer">Time Remaining: 3:00</div> <!-- Timer Display -->
             <div id="messages"></div>
             <div id="typing-indicator">User is typing...</div>
@@ -326,7 +327,11 @@
                     if (data.type === "paired") {
                         document.getElementById("chat").style.display = "block";
                         document.getElementById("language-selection").style.display = "none"; // Hide language selection
-                        document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`; // Display conversation ID
+                        const conversationElement = document.getElementById("conversation-id");
+                        if (conversationElement) {
+                            conversationElement.textContent = `Conversation ID: ${data.conversation_id}`;
+                            conversationElement.style.display = "block"; // Ensure visibility
+                        }
                         console.log(data.message);
                     } else if (data.type === "timer") {
                         const minutes = Math.floor(data.remaining_time / 60);
@@ -350,7 +355,11 @@
                         console.log("Survey or expired message received:", data);
                         document.getElementById("chat").style.display = "none";
                         document.getElementById("survey").style.display = "block";
-                        document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`; 
+                        const conversationElement = document.getElementById("conversation-id");
+                        if (conversationElement) {
+                            conversationElement.textContent = `Conversation ID: ${data.conversation_id}`;
+                            conversationElement.style.display = "block"; // Ensure visibility
+                        }
                         console.log(data.message);
                     }
                 };
