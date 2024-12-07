@@ -345,12 +345,10 @@
                         } else {
                             document.getElementById("typing-indicator").style.display = "none";
                         }
-                    } else if (data.type === "survey") {
+                    } else if (data.type === "survey" || data.type === "expired") {
                         document.getElementById("chat").style.display = "none";
                         document.getElementById("survey").style.display = "block";
-                    } else if (data.type == "expired") {
-                        document.getElementById("chat").style.display = "none";
-                        document.getElementById("survey").style.display = "block";
+                        document.getElementById("conversation-id").style.display = "block";
                     }
                 };
 
