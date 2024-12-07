@@ -346,6 +346,7 @@
                             document.getElementById("typing-indicator").style.display = "none";
                         }
                     } else if (data.type === "survey" || data.type === "expired") {
+                        console.log("Survey or expired message received:", data);
                         document.getElementById("chat").style.display = "none";
                         document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`; // Display conversation ID
                         document.getElementById("conversation-id").style.display = "block"; // Ensure conversation ID is visible
