@@ -185,9 +185,17 @@ async def start_chat(user1, user2, conversation_id):
                     elif message["type"] == "survey":
                         sender = user1 if task == user1_task else user2
                         sender_uuid = websocket_to_uuid[sender]
-                        
-                        column = "user1_postsurvey" if sender_uuid == websocket_to_uuid[user1] else "user2_postsurvey"
-                        print(f"[DEBUG] {sender, sender_uuid, column}")
+
+                        # Determine the correct column using the sender's UUID
+                        if sender_uuid == websocket_to_uuid[user1]:
+                            column = "user1_postsurvey"
+                        elif sender_uuid == websocket_to_uuid[user2]:
+                            column = "user2_postsurvey"
+                        else:
+                            print(f"[ERROR] Sender UUID {sender_uuid} not matched to user1 or user2!")
+                            return
+
+                        print(f"[DEBUG] Sender UUID {sender_uuid}, mapped to {column}.")
 
                         try:
                             with conn.cursor() as cursor:
@@ -199,7 +207,10 @@ async def start_chat(user1, user2, conversation_id):
                                 conn.commit()
                             print(f"[INFO] Stored {column} for User {id(sender)} in conversation {conversation_id}.")
                         except Exception as e:
-                            print(f"[ERROR] Failed to store {column} for User {id(sender)}: {e}")
+                            print(f"[ERROR] Failed to store survey for User {id(sender)}: {e}")
+
+                        survey_submitted[sender] = True
+
 
                         survey_submitted[sender] = True
 
