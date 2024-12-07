@@ -175,8 +175,8 @@ async def start_chat(user1, user2, conversation_id):
                         chat_ended = True
 
                         await asyncio.gather(
-                            user1.send(json.dumps({"type": "survey", "conversation_id": conversation_id})),
-                            user2.send(json.dumps({"type": "survey", "conversation_id": conversation_id})),
+                            user1.send(json.dumps({"type": "survey", "conversation_id": conversation_id, "message": f"Conversation {conversation_id} has ended."})),
+                            user2.send(json.dumps({"type": "survey", "conversation_id": conversation_id, "message": f"Conversation {conversation_id} has ended."})),
                         )
                         print("[INFO] Sent survey prompts to both users.")
 
