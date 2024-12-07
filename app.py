@@ -226,8 +226,6 @@ async def start_chat(user1, user2, conversation_id):
 
                         survey_submitted[sender] = True
 
-
-
                     elif message["type"] == "typing":
                         target_user = user2 if task == user1_task else user1
                         await target_user.send(json.dumps({"type": "typing", "status": "typing"}))
@@ -349,10 +347,10 @@ async def translate_message(message, source_language, target_language):
     if source == target:
         return message  # No translation needed
 
-    prompt = f"Translate the following {source} text to {target}: {message}"
+    prompt = f"Translate the following {source} text to {target}: {message}. Answer with only the translated message."
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[{"role": "user", "content": prompt}]
         )
         return response.choices[0].message.content.strip()
