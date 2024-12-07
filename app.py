@@ -325,8 +325,8 @@ async def chat_timer_task(user1, user2):
         # Time expired
         print("[INFO] Chat timer expired. Ending chat.")
         await asyncio.gather(
-            user1.send(json.dumps({"type": "expired", "message": "Chat timer has expired."})),
-            user2.send(json.dumps({"type": "expired", "message": "Chat timer has expired."}))
+            user1.send(json.dumps({"type": "expired", "conversation_id": conversation_id, "message": "Chat timer has expired."})),
+            user2.send(json.dumps({"type": "expired", "conversation_id": conversation_id, "message": "Chat timer has expired."}))
         )
     except asyncio.CancelledError:
         print(f"[INFO] Chat timer cancelled for users {id(user1)} and {id(user2)}.")
