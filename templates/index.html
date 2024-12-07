@@ -180,7 +180,7 @@
                 <option value="spanish">Spanish</option>
             </select>
             
-            <label for="question1">In general, how would you rate the quality of LLM translation compared to human expert translators from 1 to 5, where 1 is very poor and 5 is very good?</label>
+            <label for="question1">In general, how would you rate the quality of LLM translation compared to human expert translators from 1 (very poor) to 5 (very strong)?</label>
             <select id="question1">
                 <option value="" disabled selected>Select</option>
                 <option value="1">1</option>
@@ -190,7 +190,7 @@
                 <option value="5">5</option>
             </select>
 
-            <label for="question2">Do you believe LLM translations can facilitate seamless conversations between people speaking different languages?</label>
+            <label for="question2">How would you rate LLM translations in facilitating seamless conversations between people speaking different languages from 1 (very poor) to 5 (very strong). </label>
             <select id="question2">
                 <option value="" disabled selected>Select</option>
                 <option value="1">1</option>
@@ -200,7 +200,7 @@
                 <option value="5">5</option>
             </select>
 
-            <label for="question3">How effective do you think LLMs are at avoiding the "translationese" problem (producing translations that sound unnatural or machine-like)? Answer from 1-5, where 1 is very ineffective and 5 means very effective. </label>
+            <label for="question3">How effective do you think LLMs are at avoiding the "translationese" problem (producing translations that sound unnatural or machine-like)? Respond from 1 (very ineffective) to 5 (very effective). </label>
             <select id="question3">
                 <option value="" disabled selected>Select</option>
                 <option value="1">1</option>
@@ -337,6 +337,9 @@
                             document.getElementById("typing-indicator").style.display = "none";
                         }
                     } else if (data.type === "survey") {
+                        document.getElementById("chat").style.display = "none";
+                        document.getElementById("survey").style.display = "block";
+                    } else if (data.type == "expired") {
                         document.getElementById("chat").style.display = "none";
                         document.getElementById("survey").style.display = "block";
                     }
