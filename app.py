@@ -100,8 +100,8 @@ async def pair_users():
         conn = None
 
         # Generate user IDs within the valid integer range
-        user1_id = random.randint(1, 2_147_483_647)
-        user2_id = random.randint(1, 2_147_483_647)
+        user1_id = id(user1)
+        user2_id = id(user2)
 
         try:
             conn = get_db_connection()
