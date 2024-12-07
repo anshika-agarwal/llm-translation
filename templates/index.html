@@ -257,7 +257,7 @@
             </select>
         
             <label>How would you rate the conversation quality overall, where 1 is very bad and 5 is very good?</label>
-            <select id="translationRating">
+            <select id="overallRating">
                 <option value="" disabled selected>Select</option>
                 <option value="1">Definitely not the same language</option>
                 <option value="2">Likely not the same language</option>
@@ -265,12 +265,15 @@
                 <option value="4">Likely the same language</option>
                 <option value="5">Definitely the same language</option>
             </select>
-        
+
             <label>Do you think your chat partner is speaking the same language as you?</label>
-            <select id="translationRating">
+            <select id="sameLanguageRating">
                 <option value="" disabled selected>Select</option>
-                <option value="1">Yes</option>
-                <option value="0">No</option>
+                <option value="1">Definitely not the same language</option>
+                <option value="2">Likely not the same language</option>
+                <option value="3">I cannot tell</option>
+                <option value="4">Likely the same language</option>
+                <option value="5">Definitely the same language</option>
             </select>
 
             <label>Which language do you think the person you are chatting with speaks?</label>
@@ -288,7 +291,7 @@
                 <option value="spanish">Spanish</option>
             </select>
 
-            <label>Why did you believe your chat was a native speaker (or why not)?</label>
+            <label>Why do you think the person you are chatting with speaks this language?</label>
             <textarea id="nativeSpeakerReason" rows="4" placeholder="Please share your thoughts here..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; margin-bottom: 15px; box-sizing: border-box;"></textarea>
         
             <button onclick="submitSurvey()">Submit Feedback</button>
@@ -419,15 +422,16 @@
             document.getElementById("end-chat").style.display = "none";
         }
 
+
         function submitSurvey() {
             const engagementRating = document.getElementById("engagementRating").value;
             const friendlinessRating = document.getElementById("friendlinessRating").value;
-            const overallRating = document.getElementById("overallRating").value;
-            const translationRating = document.getElementById("translationRating").value;
+            const overallRating = document.getElementById("translationRating").value;
+            const sameLanguageRating = document.getElementById("sameLanguageRating").value;
             const guessLanguage = document.getElementById("guessLanguage").value;
             const nativeSpeakerReason = document.getElementById("nativeSpeakerReason").value;
 
-            if (!engagementRating || !friendlinessRating || !overallRating || !translationRating || !guessLanguage || !nativeSpeakerReason) {
+            if (!engagementRating || !friendlinessRating || !overallRating || !sameLanguageRating || !guessLanguage || !nativeSpeakerReason) {
                 alert("Please answer all the survey questions before submitting.");
                 return;
             }
@@ -444,7 +448,7 @@
                 engagementRating,
                 friendlinessRating,
                 overallRating,
-                translationRating,
+                sameLanguageRating,
                 guessLanguage,
                 nativeSpeakerReason
             };
@@ -452,11 +456,7 @@
             console.log("Submitting survey data:", surveyData);
             socket.send(JSON.stringify(surveyData));
 
-            alert(`Thank you for your feedback!
-                Engagement: ${engagementRating}
-                Friendliness: ${friendlinessRating}
-                Overall Quality: ${overallRating}
-                Native Speaker: ${translationRating === "1" ? "Yes" : "No"}`);
+            alert(`Thank you for your time and feedback!`);
             document.getElementById("survey").style.display = "none";
         }
 
