@@ -185,7 +185,9 @@ async def start_chat(user1, user2, conversation_id):
                     elif message["type"] == "survey":
                         sender = user1 if task == user1_task else user2
                         sender_uuid = websocket_to_uuid[sender]
+                        
                         column = "user1_postsurvey" if sender_uuid == websocket_to_uuid[user1] else "user2_postsurvey"
+                        print(f"[DEBUG] {sender, sender_uuid, column}")
 
                         try:
                             with conn.cursor() as cursor:
