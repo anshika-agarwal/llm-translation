@@ -142,9 +142,10 @@ async def pair_users():
 
 async def start_chat(user1, user2, conversation_id):
     conn = None
+    chat_ended = False
+
     try:
         conn = get_db_connection()
-        chat_ended = False
 
         while not chat_ended:
             user1_task = asyncio.create_task(user1.receive())
@@ -162,7 +163,22 @@ async def start_chat(user1, user2, conversation_id):
                         print(f"[ERROR] Missing 'type' in message: {message}")
                         continue
 
-                    if message["type"] == "endChat":
+                    # Handle survey message directly in the main loop
+                    if message["type"] == "survey":
+                        sender = user1 if task == user1_task else user2
+                        print(f"[INFO] Received survey from User {id(sender)}: {message}")
+
+                        # Update survey in the database
+                        with conn.cursor() as cursor:
+                            cursor.execute(f"""
+                                UPDATE conversations
+                                SET {"user1_postsurvey" if sender == user1 else "user2_postsurvey"} = %s
+                                WHERE conversation_id = %s
+                            """, (Json(message), conversation_id))
+                            conn.commit()
+                        print(f"[INFO] Stored survey for User {id(sender)} in conversation {conversation_id}.")
+
+                    elif message["type"] == "endChat":
                         print(f"[INFO] User {id(user1) if task == user1_task else id(user2)} ended the chat.")
                         chat_ended = True
 
@@ -177,61 +193,6 @@ async def start_chat(user1, user2, conversation_id):
                             user2.send(json.dumps(survey_prompt)),
                         )
                         print("[INFO] Sent survey prompts to both users.")
-
-                        # Collect survey responses
-                        user1_response_task = asyncio.create_task(user1.receive())
-                        user2_response_task = asyncio.create_task(user2.receive())
-
-                        survey_done, _ = await asyncio.wait(
-                            [user1_response_task, user2_response_task],
-                            return_when=asyncio.ALL_COMPLETED,
-                        )
-
-                        user1_response, user2_response = None, None
-                        for survey_task in survey_done:
-                            try:
-                                survey_message = json.loads(survey_task.result())
-                                if survey_message["type"] == "survey":
-                                    if survey_task == user1_response_task:
-                                        user1_response = {
-                                            "engagementRating": survey_message["engagementRating"],
-                                            "friendlinessRating": survey_message["friendlinessRating"],
-                                            "overallRating": survey_message["overallRating"],
-                                            "translationRating": survey_message.get("translationRating", ""),
-                                            "guessLanguage": survey_message.get("guessLanguage", ""),
-                                            "nativeSpeakerReason": survey_message.get("nativeSpeakerReason", ""),
-                                        }
-                                        print(f"[INFO] Received survey from User {id(user1)}: {user1_response}")
-                                    elif survey_task == user2_response_task:
-                                        user2_response = {
-                                            "engagementRating": survey_message["engagementRating"],
-                                            "friendlinessRating": survey_message["friendlinessRating"],
-                                            "overallRating": survey_message["overallRating"],
-                                            "translationRating": survey_message.get("translationRating", ""),
-                                            "guessLanguage": survey_message.get("guessLanguage", ""),
-                                            "nativeSpeakerReason": survey_message.get("nativeSpeakerReason", ""),
-                                        }
-                                        print(f"[INFO] Received survey from User {id(user2)}: {user2_response}")
-                            except Exception as e:
-                                print(f"[ERROR] Error processing survey message: {e}")
-
-                        # Store survey responses in the database
-                        with conn.cursor() as cursor:
-                            cursor.execute("""
-                                UPDATE conversations
-                                SET user1_postsurvey = %s,
-                                    user2_postsurvey = %s
-                                WHERE conversation_id = %s
-                            """, (
-                                Json(user1_response) if user1_response else None,
-                                Json(user2_response) if user2_response else None,
-                                conversation_id,
-                            ))
-                            conn.commit()
-                        print(f"[INFO] Stored survey results for conversation {conversation_id}.")
-
-                        # Exit the loop after surveys are handled
-                        break
 
                     elif message["type"] == "typing":
                         target_user = user2 if task == user1_task else user1
@@ -282,7 +243,6 @@ async def start_chat(user1, user2, conversation_id):
         # Ensure WebSocket connections are closed
         await asyncio.gather(safe_close(user1), safe_close(user2))
         print("[INFO] WebSocket connections closed.")
-
 
 async def get_survey_response(user, user_id):
     """
