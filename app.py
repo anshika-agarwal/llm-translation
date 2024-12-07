@@ -121,7 +121,7 @@ async def pair_users():
                 """, (
                     user1_id, user2_id, user_languages[user1], user_languages[user2],
                     "control" if user_languages[user1] == user_languages[user2] else "experiment",
-                    'gpt-4o-mini', Json([]), Json(user_presurveys[user1]), Json(user_presurveys[user2])
+                    'gpt-4o', Json([]), Json(user_presurveys[user1]), Json(user_presurveys[user2])
                 ))
                 conversation_id = cursor.fetchone()[0]
                 conn.commit()
@@ -307,7 +307,7 @@ async def translate_message(message, source_language, target_language):
     except Exception as e:
         print(f"[ERROR] OpenAI API call failed: {e}")
         return "Translation error."
-        
+
 
 async def chat_timer_task(user1, user2, conversation_id):
     try:
