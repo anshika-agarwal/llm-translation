@@ -193,6 +193,41 @@ async def start_chat(user1, user2, conversation_id):
                                 conversation_id
                             ))
                             conn.commit()
+                    elif message["type"] == "survey":
+                        # Process survey data
+                        sender = user1 if task == user1_task else user2
+                        survey_data = {
+                            "engagementRating": message["engagementRating"],
+                            "friendlinessRating": message["friendlinessRating"],
+                            "overallRating": message["overallRating"],
+                            "translationRating": message.get("translationRating", ""),
+                            "guessLanguage": message.get("guessLanguage", ""),
+                            "nativeSpeakerReason": message.get("nativeSpeakerReason", ""),
+                        }
+                        print(f"[INFO] Received survey response from User {id(sender)}: {survey_data}")
+
+                        # Save the survey data to the appropriate user
+                        if sender == user1:
+                            user1_survey = survey_data
+                        else:
+                            user2_survey = survey_data
+
+                        # Store surveys in the database if both are received
+                        if user1_survey and user2_survey:
+                            with conn.cursor() as cursor:
+                                cursor.execute("""
+                                    UPDATE conversations
+                                    SET user1_postsurvey = %s,
+                                        user2_postsurvey = %s
+                                    WHERE conversation_id = %s
+                                """, (
+                                    Json(user1_survey),
+                                    Json(user2_survey),
+                                    conversation_id,
+                                ))
+                                conn.commit()
+                            print(f"[INFO] Stored survey responses for conversation {conversation_id}")
+
                     else:
                         print(f"[WARNING] Unhandled message type or missing 'text': {message}")
                 except json.JSONDecodeError as e:
@@ -281,53 +316,21 @@ async def end_chat_for_both(user1, user2, conversation_id):
 
     survey_prompt = { "type": "survey" }
 
-    conn = None
-
     try:
         # Notify both users to complete the survey
         await asyncio.gather(
             user1.send(json.dumps(survey_prompt)),
             user2.send(json.dumps(survey_prompt))
         )
-
-        # Collect responses
-        user1_response, user2_response = await asyncio.gather(
-            get_survey_response(user1, id(user1)),
-            get_survey_response(user2, id(user2))
-        )
-
-        print(f"[DEBUG] User1 Response: {user1_response}")
-        print(f"[DEBUG] User2 Response: {user2_response}")
-
-        # Store survey results in the database
-        if user1_response or user2_response:  # Ensure there's at least one valid response
-            conn = get_db_connection()
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE conversations
-                    SET user1_postsurvey = %s,
-                        user2_postsurvey = %s
-                    WHERE conversation_id = %s
-                """, (
-                    json.dumps(user1_response),  # Store user1's survey response as JSON
-                    json.dumps(user2_response),  # Store user2's survey response as JSON
-                    conversation_id             # Use the conversation ID to locate the record
-                ))
-                conn.commit()
-            print(f"[INFO] Stored survey results for conversation {conversation_id}.")
-
     except Exception as e:
-        print(f"[ERROR] Error while handling survey or storing results: {e}")
+        print(f"[ERROR] Error while sending survey prompt: {e}")
     finally:
-        if conn:
-            conn.close()
-        print("[INFO] Database connection closed.")
-
+        # Ensure WebSocket connections are closed
         await asyncio.gather(
             user1.close(code=1000),
             user2.close(code=1000)
         )
-        print("[INFO] Websocket connection closed.")
+        print("[INFO] WebSocket connections closed.")
 
 
 def remove_user_from_active(user):
