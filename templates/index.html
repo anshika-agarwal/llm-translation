@@ -347,9 +347,21 @@
                         }
                     } else if (data.type === "survey" || data.type === "expired") {
                         console.log("Survey or expired message received:", data);
+
+                        // Hide chat section
                         document.getElementById("chat").style.display = "none";
-                        document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`; // Display conversation ID
-                        document.getElementById("conversation-id").style.display = "block"; // Ensure conversation ID is visible
+
+                        // Handle conversation ID
+                        const conversationElement = document.getElementById("conversation-id");
+                        if (conversationElement) {
+                            console.log("Element found:", conversationElement);
+                            conversationElement.textContent = `Conversation ID: ${data.conversation_id}`;
+                            conversationElement.style.display = "block"; // Ensure visibility
+                        } else {
+                            console.error("Element #conversation-id not found!");
+                        }
+
+                        // Show survey section
                         document.getElementById("survey").style.display = "block";
                         console.log(data.message);
                     }
