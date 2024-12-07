@@ -142,7 +142,7 @@ async def pair_users():
 
 async def start_chat(user1, user2, conversation_id):
     conn = None
-    chat_ended = False
+    chat_ended = False  # Flag to indicate the chat has ended
     try:
         conn = get_db_connection()
 
@@ -165,13 +165,24 @@ async def start_chat(user1, user2, conversation_id):
                     if message["type"] == "endChat":
                         print(f"[INFO] User {id(user1) if task == user1_task else id(user2)} ended the chat.")
                         chat_ended = True
-                        # Cancel pending tasks and pass control to end_chat_for_both
+
+                        # Cancel remaining tasks
                         for pending_task in pending:
                             pending_task.cancel()
+
+                        # Hand control to `end_chat_for_both`
                         await end_chat_for_both(user1, user2, conversation_id)
-                        return  # Exit the function after transferring control
+                        return  # Exit `start_chat`
+
+                    elif message["type"] == "typing":
+                        target_user = user2 if task == user1_task else user1
+                        await target_user.send(json.dumps({"type": "typing", "status": "typing"}))
+
+                    elif message["type"] == "stopTyping":
+                        target_user = user2 if task == user1_task else user1
+                        await target_user.send(json.dumps({"type": "typing", "status": "stopped"}))
+
                     elif message["type"] == "message" and "text" in message:
-                        # Process regular chat messages
                         sender = user1 if task == user1_task else user2
                         receiver = user2 if task == user1_task else user1
                         translated_message = await translate_message(
@@ -192,10 +203,16 @@ async def start_chat(user1, user2, conversation_id):
                                 conversation_id,
                             ))
                             conn.commit()
+
                     else:
                         print(f"[WARNING] Unhandled message type or missing 'text': {message}")
+
                 except Exception as e:
                     print(f"[ERROR] Exception while processing message: {e}")
+
+            # Cancel any remaining tasks after processing
+            for task in pending:
+                task.cancel()
 
     except Exception as e:
         print(f"[ERROR] Exception in start_chat: {e}")
