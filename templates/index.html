@@ -234,6 +234,7 @@
         <!-- Survey Section -->
         <div id="survey">
             <h3>Survey</h3>
+            <div id="conversation-id"></div>
             <label>How would you rate your conversation on engagement, where 1 is very unengaging and 5 is super engaging?</label>
             <select id="engagementRating">
                 <option value="" disabled selected>Select</option>
@@ -349,9 +350,6 @@
                         console.log("Survey or expired message received:", data);
                         document.getElementById("chat").style.display = "none";
                         document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`; 
-                        document.getElementById("conversation-id").style.display = "block";
-                        document.getElementById("conversation-id").style.visibility = "visible";
-                        document.getElementById("conversation-id").style.opacity = "1";
                         document.getElementById("survey").style.display = "block";
                         console.log(data.message);
                     }
