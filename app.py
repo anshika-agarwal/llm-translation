@@ -174,11 +174,9 @@ async def start_chat(user1, user2, conversation_id):
                         print(f"[INFO] User {id(user1) if task == user1_task else id(user2)} ended the chat.")
                         chat_ended = True
 
-                        # Send survey prompts to both users
-                        survey_prompt = {"type": "survey"}
                         await asyncio.gather(
-                            user1.send(json.dumps(survey_prompt)),
-                            user2.send(json.dumps(survey_prompt)),
+                            user1.send(json.dumps({"type": "survey", "conversation_id": conversation_id})),
+                            user2.send(json.dumps({"type": "survey", "conversation_id": conversation_id})),
                         )
                         print("[INFO] Sent survey prompts to both users.")
 
@@ -339,7 +337,7 @@ async def safe_close(websocket):
     Safely close a WebSocket connection, catching any exceptions.
     """
     try:
-        await websocket.close()
+        await websocket.close(code=1000)
         print(f"[INFO] WebSocket {id(websocket)} closed successfully.")
     except Exception as e:
         print(f"[ERROR] Error while closing WebSocket {id(websocket)}: {e}")
