@@ -347,8 +347,8 @@
                         }
                     } else if (data.type === "survey" || data.type === "expired") {
                         document.getElementById("chat").style.display = "none";
-                        document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`;
-                        document.getElementById("conversation-id").style.display = "block";
+                        document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`; // Display conversation ID
+                        document.getElementById("conversation-id").style.display = "block"; // Ensure conversation ID is visible
                         document.getElementById("survey").style.display = "block";
                         console.log(data.message);
                     }
