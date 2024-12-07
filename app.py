@@ -137,8 +137,8 @@ async def pair_users():
             )
 
             # Start the chat timer and the chat session concurrently
-            chat_timer_task = asyncio.create_task(chat_timer_task(user1, user2))
-            chat_task = asyncio.create_task(start_chat(user1, user2, conversation_id))
+            asyncio.create_task(chat_timer_task(user1, user2))
+            asyncio.create_task(start_chat(user1, user2, conversation_id))
 
         except Exception as e:
             print(f"[ERROR] Failed to pair users or insert conversation into the database: {e}")
@@ -173,6 +173,7 @@ async def start_chat(user1, user2, conversation_id):
                     if message["type"] == "endChat":
                         print(f"[INFO] User {id(user1) if task == user1_task else id(user2)} ended the chat.")
                         chat_ended = True
+                        chat_timer_task.cancel()  # Cancel the chat timer
                         await asyncio.gather(
                             user1.send(json.dumps({"type": "survey", "conversation_id": conversation_id, "message": f"Conversation {conversation_id} has ended."})),
                             user2.send(json.dumps({"type": "survey", "conversation_id": conversation_id, "message": f"Conversation {conversation_id} has ended."})),
