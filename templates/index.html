@@ -75,6 +75,13 @@
             margin-bottom: 10px;
         }
 
+        #conversation-id {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2d89e5;
+            margin-bottom: 10px;
+        }
+
         #messages {
             max-height: 500px;
             overflow-y: auto;
@@ -215,6 +222,7 @@
         <!-- Chat Section -->
         <div id="chat">
             <h3>Chat Room</h3>
+            <div id="conversation-id"></div> <!-- Conversation ID Display -->
             <div id="timer">Time Remaining: 3:00</div> <!-- Timer Display -->
             <div id="messages"></div>
             <div id="typing-indicator">User is typing...</div>
@@ -317,6 +325,7 @@
                     if (data.type === "paired") {
                         document.getElementById("chat").style.display = "block";
                         document.getElementById("language-selection").style.display = "none"; // Hide language selection
+                        document.getElementById("conversation-id").textContent = `Conversation ID: ${data.conversation_id}`; // Display conversation ID
                         console.log(data.message);
                     } else if (data.type === "timer") {
                         const minutes = Math.floor(data.remaining_time / 60);
@@ -342,7 +351,6 @@
                     } else if (data.type == "expired") {
                         document.getElementById("chat").style.display = "none";
                         document.getElementById("survey").style.display = "block";
-                    }
                 };
 
                 socket.onclose = () => {

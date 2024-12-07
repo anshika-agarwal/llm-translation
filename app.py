@@ -132,8 +132,8 @@ async def pair_users():
 
             # Notify users they are paired
             await asyncio.gather(
-                user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"})),
-                user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!"}))
+                user1.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!", "conversation_id": conversation_id})),
+                user2.send(json.dumps({"type": "paired", "message": "You are now paired. Start chatting!", "conversation_id": conversation_id}))
             )
 
             # Start the chat timer and the chat session concurrently
