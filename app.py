@@ -72,13 +72,19 @@ async def ws():
         user_presurveys[current_user] = presurvey
         print(f"[INFO] User {websocket_id} presurvey data stored temporarily: {presurvey}")
 
-    # Add user to the waiting room
-    waiting_room.append(current_user)
+    # Add user to the waiting room with a timestamp
+    waiting_room.append((current_user, time.time()))
 
-    # Wait until paired
+    # Wait until paired or timeout
+    start_time = time.time()
     while current_user not in active_users:
         if len(waiting_room) >= 2:
             await pair_users()
+        elif time.time() - start_time > 300:  # 5 minutes in seconds
+            # Remove user from waiting room if timeout
+            waiting_room = [(user, timestamp) for user, timestamp in waiting_room if user != current_user]
+            await current_user.send(json.dumps({"type": "waitingRoomTimeout", "message": "Could not find a chat partner. Try again later!"}))
+            break
         await asyncio.sleep(1)
 
     # Once paired, start chat
@@ -98,8 +104,8 @@ async def pair_users():
     global waiting_room, active_users, conversation_mapping
 
     if len(waiting_room) >= 2:
-        user1 = waiting_room.pop(0)
-        user2 = waiting_room.pop(0)
+        user1 = waiting_room.pop(0)[0]
+        user2 = waiting_room.pop(0)[0]
 
         active_users[user1] = user2
         active_users[user2] = user1

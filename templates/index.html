@@ -364,6 +364,9 @@
                             conversationElement.style.display = "block"; // Ensure visibility
                         }
                         console.log(data.message);
+                    } else if (data.type == "waitingRoomTimeout") {
+                        console.log(data.message)
+                        document.getElementById("language-selection").style.display = "block";
                     }
                 };
 
