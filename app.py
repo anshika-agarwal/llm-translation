@@ -8,6 +8,7 @@ import json
 import uuid  # Use UUIDs for persistent user IDs
 import psycopg2
 from psycopg2.extras import Json
+import time
 
 app = Quart(__name__)
 
