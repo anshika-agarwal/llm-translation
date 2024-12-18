@@ -164,6 +164,23 @@
         #language-selection {
             margin-bottom: 20px;
         }
+
+        #chat-partner-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #chat-partner-popup p {
+            margin: 0;
+            padding: 0;
+        }
     </style>
 </head>
 <body>
@@ -216,7 +233,7 @@
                 <option value="4">4</option>
                 <option value="5">5</option>
             </select>
-            <button onclick="findPair()">Find a Chat Partner</button>
+            <button onclick="findPair(); document.getElementById('chat-partner-popup').style.display = 'block';">Find a Chat Partner</button>
         </div>
 
         <div id="conversation-id"></div> <!-- Conversation ID Display -->
@@ -298,6 +315,10 @@
         </div>
     </div>
 
+    <div id="chat-partner-popup">
+        <p>Looking for a chat partner...</p>
+    </div>
+
     <script>
         let socket;
         let typingTimeout;
@@ -365,15 +386,16 @@
                         }
                         console.log(data.message);
                     } else if (data.type == "waitingRoomTimeout") {
-                        console.log(data.message)
-                        document.getElementById("language-selection").style.display = "block";
+                        console.log(data.message);
+                        document.getElementById("language-selection").style.display = "none";
+                        document.getElementById("chat-partner-popup").style.display = "none";
+                        alert(`Could not find a chat partner. Try again later!`);
                     }
                 };
 
                 socket.onclose = () => {
                     console.log("Disconnected from WebSocket");
                     document.getElementById("chat").style.display = "none";
-                    document.getElementById("survey").style.display = "block";
                 };
 
                 socket.onerror = (error) => {

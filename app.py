@@ -79,13 +79,23 @@ async def ws():
     # Wait until paired or timeout
     start_time = time.time()
     while current_user not in active_users:
+        print(f"[INFO] {waiting_room}")
+        print(f"[INFO] {active_users}")
         if len(waiting_room) >= 2:
+            print("HERE")
             await pair_users()
-        elif time.time() - start_time > 300:  # 5 minutes in seconds
-            # Remove user from waiting room if timeout
-            waiting_room = [(user, timestamp) for user, timestamp in waiting_room if user != current_user]
-            await current_user.send(json.dumps({"type": "waitingRoomTimeout", "message": "Could not find a chat partner. Try again later!"}))
-            break
+        elif time.time() - start_time > 30:
+            # Remove user from waiting room if timeout (modify in-place)
+            waiting_room[:] = [(user, timestamp) for user, timestamp in waiting_room if user != current_user]
+            print(f"[INFO] User {websocket_id} timed out. Removing from waiting room.")
+            await current_user.send(json.dumps({
+                "type": "waitingRoomTimeout",
+                "message": "Could not find a chat partner. Try again later!"
+            }))
+            await asyncio.sleep(0.1)
+            await safe_close(current_user)  # Fix: Await safe_close
+
+
         await asyncio.sleep(1)
 
     # Once paired, start chat
