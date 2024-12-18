@@ -79,10 +79,7 @@ async def ws():
     # Wait until paired or timeout
     start_time = time.time()
     while current_user not in active_users:
-        print(f"[INFO] {waiting_room}")
-        print(f"[INFO] {active_users}")
         if len(waiting_room) >= 2:
-            print("HERE")
             await pair_users()
         elif time.time() - start_time > 30:
             # Remove user from waiting room if timeout (modify in-place)
