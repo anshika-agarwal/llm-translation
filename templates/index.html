@@ -351,6 +351,7 @@
                     if (data.type === "paired") {
                         document.getElementById("chat").style.display = "block";
                         document.getElementById("language-selection").style.display = "none"; // Hide language selection
+                        document.getElementById("chat-partner-popup").style.display = "none";
                         const conversationElement = document.getElementById("conversation-id");
                         if (conversationElement) {
                             conversationElement.textContent = `Conversation ID: ${data.conversation_id}`;
