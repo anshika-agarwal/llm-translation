@@ -81,7 +81,7 @@ async def ws():
     while current_user not in active_users:
         if len(waiting_room) >= 2:
             await pair_users()
-        elif time.time() - start_time > 30:
+        elif time.time() - start_time > 300:
             # Remove user from waiting room if timeout (modify in-place)
             waiting_room[:] = [(user, timestamp) for user, timestamp in waiting_room if user != current_user]
             print(f"[INFO] User {websocket_id} timed out. Removing from waiting room.")
