@@ -66,33 +66,45 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
             width: 100%;
         }
 
         .scale-container {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             width: 100%;
-            max-width: 300px;
+            max-width: 400px;
+            font-weight: bold;
         }
 
         .radio-group {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             width: 100%;
-            max-width: 300px;
+            max-width: 400px;
+            gap: 30px;
         }
 
         .radio-group input {
-            margin: 0 5px;
+            margin-top: 5px;
         }
 
         .numbers {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             width: 100%;
-            max-width: 300px;
+            max-width: 400px;
+            gap: 30px;
+            font-size: 14px;
+        }
+
+        .question-label {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            max-width: 600px;
         }
 
         #chat {
@@ -236,10 +248,11 @@
                 <option value="korean">Korean</option>
                 <option value="spanish">Spanish</option>
             </select>
-        
-            <label>In general, how would you consider the quality of LLM translation compared to human expert translators?</label>
-            
+
+            <!-- Likert Scale Question -->
             <div class="question-container">
+                <label class="question-label">In general, how would you consider the quality of LLM translation compared to human expert translators?</label>
+                
                 <div class="numbers">
                     <span>1</span>
                     <span>2</span>
@@ -247,6 +260,7 @@
                     <span>4</span>
                     <span>5</span>
                 </div>
+                
                 <div class="radio-group">
                     <input type="radio" id="q1_1" name="question1" value="1">
                     <input type="radio" id="q1_2" name="question1" value="2">
@@ -255,7 +269,32 @@
                     <input type="radio" id="q1_5" name="question1" value="5">
                 </div>
             </div>
-        
+
+            <!-- Dropdown Questions -->
+            <div class="dropdown-question">
+                <label for="question2">How would you consider LLM translations in facilitating seamless conversations between people speaking different languages?</label>
+                <select id="question2">
+                    <option value="" disabled selected>Select</option>
+                    <option value="1">1 - Very Poor</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5 - Very Strong</option>
+                </select>
+            </div>
+
+            <div class="dropdown-question">
+                <label for="question3">How effective do you think LLMs are at avoiding the "translationese" problem (producing translations that sound unnatural or machine-like)?</label>
+                <select id="question3">
+                    <option value="" disabled selected>Select</option>
+                    <option value="1">1 - Very Ineffective</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5 - Very Effective</option>
+                </select>
+            </div>
+
             <button onclick="findPair(); document.getElementById('chat-partner-popup').style.display = 'block';">Find a Chat Partner</button>
         </div>
 
