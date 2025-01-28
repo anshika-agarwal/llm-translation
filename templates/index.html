@@ -62,6 +62,17 @@
             background: linear-gradient(135deg, #1d6fd9, #4569d8);
         }
 
+        #question1, #question2, #question3 {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #question1 label, #question2 label, #question3 label {
+            margin-right: 5px;
+        }
+
         #chat {
             margin-top: 20px;
             text-align: left;
@@ -203,40 +214,48 @@
                 <option value="korean">Korean</option>
                 <option value="spanish">Spanish</option>
             </select>
-            
+
             <label for="question1">In general, how would you consider the quality of LLM translation compared to human expert translators from 1 (very poor) to 5 (very strong)?</label>
             <div id="question1">
-                <input type="radio" id="1" name="question1" value="1">
-                <label for="1">1</label>
-                <input type="radio" id="2" name="question1" value="2">
-                <label for="2">2</label>
-                <input type="radio" id="3" name="question1" value="3">
-                <label for="3">3</label>
-                <input type="radio" id="4" name="question1" value="4">
-                <label for="4">4</label>
-                <input type="radio" id="5" name="question1" value="5">
-                <label for="5">5</label>
+                <input type="radio" id="q1_1" name="question1" value="1">
+                <label for="q1_1">1</label>
+                <input type="radio" id="q1_2" name="question1" value="2">
+                <label for="q1_2">2</label>
+                <input type="radio" id="q1_3" name="question1" value="3">
+                <label for="q1_3">3</label>
+                <input type="radio" id="q1_4" name="question1" value="4">
+                <label for="q1_4">4</label>
+                <input type="radio" id="q1_5" name="question1" value="5">
+                <label for="q1_5">5</label>
             </div>
 
-            <label for="question2">How would you consider LLM translations in facilitating seamless conversations between people speaking different languages from 1 (very poor) to 5 (very strong)? </label>
-            <select id="question2">
-                <option value="" disabled selected>Select</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
+            <label for="question2">How would you consider LLM translations in facilitating seamless conversations between people speaking different languages from 1 (very poor) to 5 (very strong)?</label>
+            <div id="question2">
+                <input type="radio" id="q2_1" name="question2" value="1">
+                <label for="q2_1">1</label>
+                <input type="radio" id="q2_2" name="question2" value="2">
+                <label for="q2_2">2</label>
+                <input type="radio" id="q2_3" name="question2" value="3">
+                <label for="q2_3">3</label>
+                <input type="radio" id="q2_4" name="question2" value="4">
+                <label for="q2_4">4</label>
+                <input type="radio" id="q2_5" name="question2" value="5">
+                <label for="q2_5">5</label>
+            </div>
 
-            <label for="question3">How effective do you think LLMs are at avoiding the "translationese" problem (producing translations that sound unnatural or machine-like)? Respond from 1 (very ineffective) to 5 (very effective). </label>
-            <select id="question3">
-                <option value="" disabled selected>Select</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
+            <label for="question3">How effective do you think LLMs are at avoiding the "translationese" problem (producing translations that sound unnatural or machine-like)? Respond from 1 (very ineffective) to 5 (very effective).</label>
+            <div id="question3">
+                <input type="radio" id="q3_1" name="question3" value="1">
+                <label for="q3_1">1</label>
+                <input type="radio" id="q3_2" name="question3" value="2">
+                <label for="q3_2">2</label>
+                <input type="radio" id="q3_3" name="question3" value="3">
+                <label for="q3_3">3</label>
+                <input type="radio" id="q3_4" name="question3" value="4">
+                <label for="q3_4">4</label>
+                <input type="radio" id="q3_5" name="question3" value="5">
+                <label for="q3_5">5</label>
+            </div>
             <button onclick="findPair(); document.getElementById('chat-partner-popup').style.display = 'block';">Find a Chat Partner</button>
         </div>
 
