@@ -1,4 +1,7 @@
-python-dotenv==1.0.1
-openai==1.54.3
-quart==0.19.8
-psycopg2-binary==2.9.9
+Flask==2.2.3
+flask_sock==0.5.2
+psycopg2-binary==2.9.6
+python-dotenv==1.0.0
+openai==0.27.0
+gevent
+Werkzeug==2.2.3

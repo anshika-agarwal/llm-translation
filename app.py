@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 import openai
-from openai import OpenAI
 from quart import Quart, render_template, websocket
 import asyncio
 import json
@@ -11,10 +10,12 @@ from psycopg2.extras import Json
 import time
 
 app = Quart(__name__)
+app.config.setdefault("PROVIDE_AUTOMATIC_OPTIONS", True)
+
 
 # Initialize OpenAI API client
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Queues for user management
 waiting_room = []
@@ -313,7 +314,7 @@ async def translate_message(message, source_language, target_language):
 
     prompt = f"Translate the following {source} text to {target}: {message}. Answer with only the translated message."
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}]
         )
